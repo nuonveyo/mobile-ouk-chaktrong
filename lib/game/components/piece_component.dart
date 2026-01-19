@@ -1,15 +1,20 @@
+import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/models.dart';
 import '../../core/constants/constants.dart';
 
-/// A single chess piece component
+/// A single chess piece component with SVG support
 class PieceComponent extends PositionComponent {
   final Piece piece;
   Position boardPosition;
   double _squareSize;
   bool _isSelected = false;
+  ui.Image? _svgImage;
+  bool _useSvg = false;
 
   PieceComponent({
     required this.piece,
@@ -18,11 +23,78 @@ class PieceComponent extends PositionComponent {
   }) : _squareSize = squareSize {
     size = Vector2.all(squareSize);
     anchor = Anchor.topLeft;
+    
+    // Use SVG for back row pieces (not unpromoted fish)
+    _useSvg = piece.type != PieceType.fish;
+  }
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    
+    if (_useSvg) {
+      await _loadSvgImage();
+    }
+  }
+
+  Future<void> _loadSvgImage() async {
+    final colorFolder = piece.color == PlayerColor.white ? 'white' : 'black';
+    final pieceName = _getPieceName();
+    final assetPath = 'assets/pieces/$colorFolder/$pieceName.svg';
+    
+    try {
+      final svgString = await rootBundle.loadString(assetPath);
+      final pictureInfo = await vg.loadPicture(SvgStringLoader(svgString), null);
+      
+      // Convert to image
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      final size = _squareSize * 0.75;
+      
+      canvas.scale(size / pictureInfo.size.width, size / pictureInfo.size.height);
+      canvas.drawPicture(pictureInfo.picture);
+      
+      final picture = recorder.endRecording();
+      _svgImage = await picture.toImage(size.toInt(), size.toInt());
+      pictureInfo.picture.dispose();
+    } catch (e) {
+      // Fallback to text rendering if SVG fails
+      _useSvg = false;
+    }
+  }
+
+  String _getPieceName() {
+    switch (piece.type) {
+      case PieceType.king:
+        return 'King';
+      case PieceType.maiden:
+        return 'Maiden';
+      case PieceType.elephant:
+        return 'Elephant';
+      case PieceType.horse:
+        return 'Horse';
+      case PieceType.boat:
+        return 'Boat';
+      case PieceType.fish:
+        return 'Fish';
+    }
   }
 
   void updateSquareSize(double newSize) {
     _squareSize = newSize;
     size = Vector2.all(newSize);
+    // Reload SVG at new size
+    if (_useSvg) {
+      _loadSvgImage();
+    }
+  }
+
+  /// Set this piece to use SVG (for promoted fish)
+  void enableSvg() {
+    if (!_useSvg) {
+      _useSvg = true;
+      _loadSvgImage();
+    }
   }
 
   @override
@@ -82,8 +154,29 @@ class PieceComponent extends PositionComponent {
       );
     }
 
-    // Piece symbol
-    _renderSymbol(canvas, center);
+    // Piece symbol (SVG or text)
+    if (_useSvg && _svgImage != null) {
+      _renderSvgImage(canvas, center);
+    } else {
+      _renderSymbol(canvas, center);
+    }
+  }
+
+  void _renderSvgImage(Canvas canvas, Offset center) {
+    if (_svgImage == null) return;
+    
+    final imageSize = _squareSize * 0.60;
+    final offset = Offset(
+      center.dx - imageSize / 2,
+      center.dy - imageSize / 2,
+    );
+    
+    canvas.drawImageRect(
+      _svgImage!,
+      Rect.fromLTWH(0, 0, _svgImage!.width.toDouble(), _svgImage!.height.toDouble()),
+      Rect.fromLTWH(offset.dx, offset.dy, imageSize, imageSize),
+      Paint(),
+    );
   }
 
   void _renderSymbol(Canvas canvas, Offset center) {
