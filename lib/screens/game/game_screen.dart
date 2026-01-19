@@ -102,7 +102,9 @@ class _GameScreenContentState extends State<_GameScreenContent> {
           }
         },
         builder: (context, state) {
-          final gameState = state.gameState;
+          // Use Flame game state for all real-time data (timer, turn, check)
+          final flameState = _currentGameState ?? _game?.gameState;
+          final gameState = flameState ?? state.gameState;
           
           return SafeArea(
             child: Column(
@@ -120,9 +122,9 @@ class _GameScreenContentState extends State<_GameScreenContent> {
                 ),
                 
                 // Counting widget for Gold player
-                if (_currentGameState != null || _game?.gameState != null)
+                if (flameState != null)
                   CountingWidget(
-                    gameState: _currentGameState ?? _game!.gameState,
+                    gameState: flameState,
                     playerColor: PlayerColor.gold,
                     onStartBoardCounting: () => _startBoardCounting(PlayerColor.gold),
                     onStartPieceCounting: () => _startPieceCounting(PlayerColor.gold),
@@ -172,10 +174,9 @@ class _GameScreenContentState extends State<_GameScreenContent> {
                 ),
                 
                 // Counting widget for White (human player)
-                // Use Flame game's state for counting eligibility check
-                if (_currentGameState != null || _game?.gameState != null)
+                if (flameState != null)
                   CountingWidget(
-                    gameState: _currentGameState ?? _game!.gameState,
+                    gameState: flameState,
                     playerColor: PlayerColor.white,
                     onStartBoardCounting: () => _startBoardCounting(PlayerColor.white),
                     onStartPieceCounting: () => _startPieceCounting(PlayerColor.white),

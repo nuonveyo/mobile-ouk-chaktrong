@@ -1,5 +1,6 @@
+import 'dart:async' show Timer;
 import 'package:flame/game.dart';
-import 'package:flame/components.dart';
+import 'package:flame/components.dart' hide Timer;
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../logic/logic.dart';
@@ -22,6 +23,9 @@ class ChessGame extends FlameGame {
 
   Position? _selectedPosition;
   List<Move> _validMoves = [];
+  
+  Timer? _timer;
+  bool _isPaused = false;
 
   ChessGame({
     required this.gameMode,
@@ -35,6 +39,40 @@ class ChessGame extends FlameGame {
   void updateGameState(GameState newState) {
     _gameState = newState;
     onGameStateChanged?.call(_gameState);
+  }
+
+  /// Start the timer
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!_isPaused && !_gameState.isGameOver) {
+        _tickTime();
+      }
+    });
+  }
+
+  /// Stop the timer
+  void _stopTimer() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  /// Tick the time for the current player
+  void _tickTime() {
+    _gameState = _rules.tickTime(_gameState);
+    onGameStateChanged?.call(_gameState);
+    
+    // Check if game ended due to time
+    if (_gameState.isGameOver) {
+      _stopTimer();
+      SoundService().playGameOver();
+    }
+  }
+
+  @override
+  void onRemove() {
+    _stopTimer();
+    super.onRemove();
   }
 
   @override
@@ -60,6 +98,9 @@ class ChessGame extends FlameGame {
 
     // Initial piece setup
     _syncPiecesToBoard();
+    
+    // Start the timer
+    _startTimer();
   }
 
   @override
