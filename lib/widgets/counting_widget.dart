@@ -40,18 +40,18 @@ class CountingWidget extends StatelessWidget {
     // Check if this player is the chasing player (can declare draw)
     final isChasingPlayer = counting.isActive && counting.escapingPlayer != playerColor;
 
-    // If counting is active and this is the escaping player's side, show count
+    // PRIORITY 1: If counting is active and this is the escaping player's side, show count + stop
     if (counting.isActive && isEscapingPlayer) {
       return _buildActiveCountingDisplay(counting);
     }
 
-    // If counting is active and this is the chasing player's side
-    if (counting.isActive && isChasingPlayer) {
+    // PRIORITY 2: If counting is active and this is the chasing player's side, show declare draw
+    if (isChasingPlayer) {
       return _buildChasingPlayerUI();
     }
 
-    // If not counting but can start, show start buttons
-    if (canStartBoard || canStartPiece) {
+    // PRIORITY 3: If no counting active and can start, show start buttons
+    if (!counting.isActive && (canStartBoard || canStartPiece)) {
       return _buildStartCountingButtons(canStartBoard, canStartPiece);
     }
 
