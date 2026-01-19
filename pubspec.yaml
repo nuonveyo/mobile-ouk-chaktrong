@@ -1,0 +1,57 @@
+name: ouk_chaktrong
+description: "Ouk Chaktrong - Traditional Khmer Chess Game"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0-290.4.beta
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  
+  # Flame Game Engine
+  flame: ^1.18.0
+  flame_audio: ^2.10.0
+  
+  # State Management
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
+  
+  # Navigation
+  go_router: ^14.0.0
+  
+  # Firebase
+  firebase_core: ^3.8.1
+  firebase_auth: ^5.3.4
+  cloud_firestore: ^5.5.1
+  
+  # Storage & Utils
+  shared_preferences: ^2.3.3
+  uuid: ^4.5.1
+  intl: ^0.20.2
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  bloc_test: ^9.1.7
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+  generate: true
+  
+  assets:
+    - assets/images/
+    - assets/images/pieces/
+    - assets/audio/
+
+  # Fonts will be added later when font files are available
+  # Download Inter from: https://fonts.google.com/specimen/Inter
+  # Download Battambang from: https://fonts.google.com/specimen/Battambang
+
