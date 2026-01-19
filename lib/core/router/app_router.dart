@@ -4,6 +4,7 @@ import '../../screens/home/home_screen.dart';
 import '../../screens/game/game_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/lobby/lobby_screen.dart';
+import '../../screens/test/test_scenarios_screen.dart';
 import '../../core/constants/game_constants.dart';
 
 /// App router configuration using GoRouter
@@ -43,6 +44,11 @@ class AppRouter {
         path: '/lobby',
         name: 'lobby',
         builder: (context, state) => const LobbyScreen(),
+      ),
+      GoRoute(
+        path: '/test',
+        name: 'test',
+        builder: (context, state) => const TestScenariosScreen(),
       ),
     ],
   );

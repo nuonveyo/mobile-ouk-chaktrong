@@ -215,7 +215,12 @@ class HomeScreen extends StatelessWidget {
       children: [
         _buildNavItem(Icons.home_filled, 'Home', true),
         _buildNavItem(Icons.leaderboard_outlined, 'Ranks', false),
-        _buildNavItem(Icons.person_outline, 'Profile', false),
+        _buildNavItem(
+          Icons.bug_report_outlined,
+          'Test',
+          false,
+          onTap: () => context.push('/test'),
+        ),
         _buildNavItem(
           Icons.settings_outlined,
           'Settings',
