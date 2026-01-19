@@ -307,31 +307,14 @@ class MoveGenerator {
     return getAllValidMoves(board, color).isEmpty;
   }
 
-  /// Check if a rook can "see" the king (for losing king special ability)
+  /// Check if a rook is on same rank or file as king (for losing king special ability)
+  /// The king loses special ability if enemy rook moves to same row or column,
+  /// even if there are pieces blocking the path ("indirectly attacking")
   bool doesRookSeeKing(BoardState board, Position rookPos, PlayerColor kingColor) {
     final kingPos = board.findKing(kingColor);
     if (kingPos == null) return false;
     
-    // Check if on same row or column
-    if (rookPos.row != kingPos.row && rookPos.col != kingPos.col) {
-      return false;
-    }
-    
-    // Check if path is clear (rook can "see" king)
-    if (rookPos.row == kingPos.row) {
-      final minCol = rookPos.col < kingPos.col ? rookPos.col : kingPos.col;
-      final maxCol = rookPos.col > kingPos.col ? rookPos.col : kingPos.col;
-      for (var c = minCol + 1; c < maxCol; c++) {
-        if (board.getPieceAt(rookPos.row, c) != null) return false;
-      }
-      return true;
-    } else {
-      final minRow = rookPos.row < kingPos.row ? rookPos.row : kingPos.row;
-      final maxRow = rookPos.row > kingPos.row ? rookPos.row : kingPos.row;
-      for (var r = minRow + 1; r < maxRow; r++) {
-        if (board.getPieceAt(r, rookPos.col) != null) return false;
-      }
-      return true;
-    }
+    // King loses special if rook is on same row OR same column
+    return rookPos.row == kingPos.row || rookPos.col == kingPos.col;
   }
 }
