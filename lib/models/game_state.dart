@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../core/constants/game_constants.dart';
 import 'board_state.dart';
+import 'counting_state.dart';
 import 'move.dart';
 
 /// Represents the complete state of a chess game
@@ -25,6 +26,9 @@ class GameState extends Equatable {
   final bool whiteKingSpecialLost;
   final bool goldKingSpecialLost;
 
+  // Counting rules for endgame
+  final CountingState counting;
+
   const GameState({
     required this.board,
     required this.currentTurn,
@@ -39,6 +43,7 @@ class GameState extends Equatable {
     this.goldMaidenMoved = false,
     this.whiteKingSpecialLost = false,
     this.goldKingSpecialLost = false,
+    this.counting = const CountingState.none(),
   });
 
   /// Create initial game state
@@ -108,6 +113,7 @@ class GameState extends Equatable {
     bool? goldMaidenMoved,
     bool? whiteKingSpecialLost,
     bool? goldKingSpecialLost,
+    CountingState? counting,
   }) {
     return GameState(
       board: board ?? this.board,
@@ -123,6 +129,7 @@ class GameState extends Equatable {
       goldMaidenMoved: goldMaidenMoved ?? this.goldMaidenMoved,
       whiteKingSpecialLost: whiteKingSpecialLost ?? this.whiteKingSpecialLost,
       goldKingSpecialLost: goldKingSpecialLost ?? this.goldKingSpecialLost,
+      counting: counting ?? this.counting,
     );
   }
 
@@ -141,5 +148,6 @@ class GameState extends Equatable {
         goldMaidenMoved,
         whiteKingSpecialLost,
         goldKingSpecialLost,
+        counting,
       ];
 }

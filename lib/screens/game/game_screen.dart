@@ -4,9 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/game_constants.dart';
 import '../../models/models.dart';
+import '../../logic/game_rules.dart';
 import '../../blocs/game/game_bloc.dart';
 import '../../game/chess_game.dart';
 import '../../widgets/player_info_card.dart';
+import '../../widgets/counting_widget.dart';
 
 /// Game screen with Flame game widget and BLoC state management
 class GameScreen extends StatelessWidget {
@@ -52,6 +54,8 @@ class _GameScreenContent extends StatefulWidget {
 
 class _GameScreenContentState extends State<_GameScreenContent> {
   ChessGame? _game;
+  final GameRules _rules = const GameRules();
+  GameState? _currentGameState; // Track Flame game's state for UI
 
   @override
   void initState() {
@@ -64,8 +68,10 @@ class _GameScreenContentState extends State<_GameScreenContent> {
       gameMode: widget.gameMode,
       aiDifficulty: widget.aiDifficulty,
       onGameStateChanged: (gameState) {
-        // Sync with BLoC when Flame game state changes
-        // This is handled directly in the Flame game for now
+        // Sync Flame game state to widget state
+        setState(() {
+          _currentGameState = gameState;
+        });
       },
     );
   }
@@ -113,6 +119,17 @@ class _GameScreenContentState extends State<_GameScreenContent> {
                   capturedPieces: _getCapturedPieces(gameState, PlayerColor.white),
                 ),
                 
+                // Counting widget for Gold player
+                if (_currentGameState != null || _game?.gameState != null)
+                  CountingWidget(
+                    gameState: _currentGameState ?? _game!.gameState,
+                    playerColor: PlayerColor.gold,
+                    onStartBoardCounting: () => _startBoardCounting(PlayerColor.gold),
+                    onStartPieceCounting: () => _startPieceCounting(PlayerColor.gold),
+                    onStopCounting: _stopCounting,
+                    onDeclareDraw: _declareDraw,
+                  ),
+                
                 // Chess board with Flame
                 Expanded(
                   child: Center(
@@ -153,6 +170,18 @@ class _GameScreenContentState extends State<_GameScreenContent> {
                   timeRemaining: gameState.whiteTimeRemaining,
                   capturedPieces: _getCapturedPieces(gameState, PlayerColor.gold),
                 ),
+                
+                // Counting widget for White (human player)
+                // Use Flame game's state for counting eligibility check
+                if (_currentGameState != null || _game?.gameState != null)
+                  CountingWidget(
+                    gameState: _currentGameState ?? _game!.gameState,
+                    playerColor: PlayerColor.white,
+                    onStartBoardCounting: () => _startBoardCounting(PlayerColor.white),
+                    onStartPieceCounting: () => _startPieceCounting(PlayerColor.white),
+                    onStopCounting: _stopCounting,
+                    onDeclareDraw: _declareDraw,
+                  ),
                 
                 // Action buttons
                 Padding(
@@ -259,6 +288,36 @@ class _GameScreenContentState extends State<_GameScreenContent> {
         ),
       ),
     );
+  }
+
+  // ============ COUNTING HANDLERS ============
+
+  void _startBoardCounting(PlayerColor escapingPlayer) {
+    if (_game?.gameState != null) {
+      final newState = _rules.startBoardHonorCounting(_game!.gameState, escapingPlayer);
+      _game?.updateGameState(newState);
+    }
+  }
+
+  void _startPieceCounting(PlayerColor escapingPlayer) {
+    if (_game?.gameState != null) {
+      final newState = _rules.startPieceHonorCounting(_game!.gameState, escapingPlayer);
+      _game?.updateGameState(newState);
+    }
+  }
+
+  void _stopCounting() {
+    if (_game?.gameState != null) {
+      final newState = _rules.stopCounting(_game!.gameState);
+      _game?.updateGameState(newState);
+    }
+  }
+
+  void _declareDraw() {
+    if (_game?.gameState != null) {
+      final newState = _rules.declareDraw(_game!.gameState);
+      _game?.updateGameState(newState);
+    }
   }
 
   void _showExitConfirmDialog(BuildContext context) {

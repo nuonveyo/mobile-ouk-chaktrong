@@ -24,10 +24,17 @@ class GameRules {
     
     // Check game result
     GameResult result = GameResult.ongoing;
+    
+    // Check if counting player checkmated - that's a draw!
     if (_moveGenerator.isCheckmate(newBoard, newTurn)) {
-      result = state.currentTurn == PlayerColor.white
-          ? GameResult.whiteWins
-          : GameResult.goldWins;
+      if (state.counting.isActive && state.counting.escapingPlayer == state.currentTurn) {
+        // Counting player checkmated their opponent - draw
+        result = GameResult.draw;
+      } else {
+        result = state.currentTurn == PlayerColor.white
+            ? GameResult.whiteWins
+            : GameResult.goldWins;
+      }
     } else if (_moveGenerator.isStalemate(newBoard, newTurn)) {
       result = GameResult.draw;
     }
@@ -60,17 +67,25 @@ class GameRules {
     
     // Check if a rook move causes opponent's king to lose special ability
     if (move.piece.type == PieceType.boat) {
-      // Check if this rook now "sees" the opponent's king
       if (move.piece.color == PlayerColor.white) {
-        // White rook moved - check if it sees Gold king
         if (_moveGenerator.doesRookSeeKing(newBoard, move.to, PlayerColor.gold)) {
           goldKingSpecialLost = true;
         }
       } else {
-        // Gold rook moved - check if it sees White king
         if (_moveGenerator.doesRookSeeKing(newBoard, move.to, PlayerColor.white)) {
           whiteKingSpecialLost = true;
         }
+      }
+    }
+    
+    // Handle counting - increment if active and it's escaping player's move
+    CountingState newCounting = state.counting;
+    if (state.counting.isActive && state.counting.escapingPlayer == state.currentTurn) {
+      newCounting = state.counting.increment();
+      
+      // Check if count reached limit - draw
+      if (newCounting.hasReachedLimit && result == GameResult.ongoing) {
+        result = GameResult.draw;
       }
     }
     
@@ -86,6 +101,7 @@ class GameRules {
       goldMaidenMoved: goldMaidenMoved,
       whiteKingSpecialLost: whiteKingSpecialLost,
       goldKingSpecialLost: goldKingSpecialLost,
+      counting: newCounting,
     );
   }
 
@@ -125,7 +141,6 @@ class GameRules {
   GameState? undoMove(GameState state) {
     if (state.moveHistory.isEmpty) return null;
     
-    // Rebuild game state from scratch up to the second-to-last move
     var newState = GameState.initial(
       timeControl: state.whiteTimeRemaining + state.goldTimeRemaining ~/ 2,
     );
@@ -160,17 +175,128 @@ class GameRules {
     }
   }
 
+  // ============ COUNTING RULES ============
+
+  /// Check if a player can start Board's Honor counting
+  /// Requires: ≤3 pieces
+  bool canStartBoardHonorCounting(BoardState board, PlayerColor player) {
+    final pieces = board.getPieces(player);
+    return pieces.length <= 3;
+  }
+
+  /// Check if a player can start Piece's Honor counting
+  /// Requires: No unpromoted pawns AND player has only King
+  bool canStartPieceHonorCounting(BoardState board, PlayerColor player) {
+    final playerPieces = board.getPieces(player);
+    
+    // Player must have only King
+    if (playerPieces.length != 1) return false;
+    if (playerPieces.first.$2.type != PieceType.king) return false;
+    
+    // No unpromoted pawns (fish) on the board
+    final opponent = player == PlayerColor.white ? PlayerColor.gold : PlayerColor.white;
+    final opponentPieces = board.getPieces(opponent);
+    
+    final hasUnpromotedPawns = opponentPieces.any((p) => p.$2.type == PieceType.fish);
+    
+    return !hasUnpromotedPawns;
+  }
+
+  /// Start Board's Honor counting for a player
+  GameState startBoardHonorCounting(GameState state, PlayerColor escapingPlayer) {
+    return state.copyWith(
+      counting: CountingState.startBoardHonor(escapingPlayer),
+    );
+  }
+
+  /// Start Piece's Honor counting for a player
+  GameState startPieceHonorCounting(GameState state, PlayerColor escapingPlayer) {
+    final board = state.board;
+    
+    // Calculate total pieces on board (including both kings)
+    final whitePieces = board.getPieces(PlayerColor.white);
+    final goldPieces = board.getPieces(PlayerColor.gold);
+    final totalPieces = whitePieces.length + goldPieces.length;
+    
+    // Count starts from totalPieces + 1
+    final startCount = totalPieces + 1;
+    
+    // Calculate limit based on chasing player's material
+    final chasingPlayer = escapingPlayer == PlayerColor.white ? PlayerColor.gold : PlayerColor.white;
+    final limit = _calculatePieceHonorLimit(board, chasingPlayer);
+    
+    return state.copyWith(
+      counting: CountingState.startPieceHonor(
+        escapingPlayer: escapingPlayer,
+        startCount: startCount,
+        limit: limit,
+      ),
+    );
+  }
+
+  /// Calculate Piece's Honor limit based on chasing player's material
+  int _calculatePieceHonorLimit(BoardState board, PlayerColor chasingPlayer) {
+    final pieces = board.getPieces(chasingPlayer);
+    
+    int boatCount = 0;
+    int elephantCount = 0;
+    int horseCount = 0;
+    bool hasOnlyMaidens = true;
+    
+    for (final (_, piece) in pieces) {
+      switch (piece.type) {
+        case PieceType.boat:
+          boatCount++;
+          hasOnlyMaidens = false;
+        case PieceType.elephant:
+          elephantCount++;
+          hasOnlyMaidens = false;
+        case PieceType.horse:
+          horseCount++;
+          hasOnlyMaidens = false;
+        case PieceType.king:
+          break; // King doesn't affect limit
+        case PieceType.maiden:
+          break; // Maidens are included in "only maidens" check
+        case PieceType.fish:
+          hasOnlyMaidens = false;
+      }
+    }
+    
+    // Return minimum applicable limit
+    if (boatCount >= 2) return 8;
+    if (boatCount >= 1) return 16;
+    if (elephantCount >= 2) return 22;
+    if (horseCount >= 2) return 32;
+    if (elephantCount >= 1) return 44;
+    if (horseCount >= 1) return 64;
+    if (hasOnlyMaidens) return 64;
+    
+    return 64; // Default
+  }
+
+  /// Stop counting (can restart from 1 later)
+  GameState stopCounting(GameState state) {
+    return state.copyWith(
+      counting: const CountingState.none(),
+    );
+  }
+
+  /// Chasing player declares draw
+  GameState declareDraw(GameState state) {
+    if (!state.counting.isActive) return state;
+    return state.copyWith(result: GameResult.draw);
+  }
+
   /// Check for insufficient material (draw)
   bool hasInsufficientMaterial(BoardState board) {
     final whitePieces = board.getPieces(PlayerColor.white);
     final goldPieces = board.getPieces(PlayerColor.gold);
     
-    // King vs King
     if (whitePieces.length == 1 && goldPieces.length == 1) {
       return true;
     }
     
-    // King + minor piece vs King
     if ((whitePieces.length == 2 && goldPieces.length == 1) ||
         (whitePieces.length == 1 && goldPieces.length == 2)) {
       final pieces = whitePieces.length == 2 ? whitePieces : goldPieces;

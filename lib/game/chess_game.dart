@@ -15,7 +15,7 @@ class ChessGame extends FlameGame {
   final AiDifficulty? aiDifficulty;
   final void Function(GameState)? onGameStateChanged;
 
-  late GameState _gameState;
+  GameState _gameState = GameState.initial(); // Initialize immediately
   late BoardComponent _board;
   final GameRules _rules = const GameRules();
   final MoveGenerator _moveGenerator = const MoveGenerator();
@@ -30,6 +30,12 @@ class ChessGame extends FlameGame {
   });
 
   GameState get gameState => _gameState;
+
+  /// Update game state from external source (e.g., counting rules UI)
+  void updateGameState(GameState newState) {
+    _gameState = newState;
+    onGameStateChanged?.call(_gameState);
+  }
 
   @override
   Future<void> onLoad() async {
