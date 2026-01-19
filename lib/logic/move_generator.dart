@@ -116,13 +116,13 @@ class MoveGenerator {
     return moves;
   }
 
-  /// Fish moves - 1 forward, diagonal capture, promotion at rank 6
+  /// Fish moves - 1 forward, diagonal capture, promotion at opponent's fish starting row
   List<Move> _getFishMoves(BoardState board, Position from, Piece piece) {
     final moves = <Move>[];
     final direction = piece.color == PlayerColor.white ? 1 : -1;
-    final promotionRank = piece.color == PlayerColor.white
-        ? GameConstants.fishPromotionRank + 1 // Row 6 for white (0-indexed: 5)
-        : 8 - GameConstants.fishPromotionRank - 2; // Row 3 for gold (0-indexed: 2)
+    // White fish promotes at row 5 (where Gold fish starts)
+    // Gold fish promotes at row 2 (where White fish starts)
+    final promotionRank = piece.color == PlayerColor.white ? 5 : 2;
 
     // Forward move (no 2-square first move in Khmer chess)
     final forwardOne = from.offset(direction, 0);
