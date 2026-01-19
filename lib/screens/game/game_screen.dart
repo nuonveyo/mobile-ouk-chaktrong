@@ -75,13 +75,13 @@ class _GameScreenContentState extends State<_GameScreenContent> {
         
         // Check if game ended due to counting limit or other draw/win
         if (gameState.isGameOver && mounted) {
-          _showDrawDialog(context, gameState);
+          _showGameOverDialog(context, gameState);
         }
       },
     );
   }
   
-  void _showDrawDialog(BuildContext context, GameState gameState) {
+  void _showGameOverDialog(BuildContext context, GameState gameState) {
     String title;
     String message;
     
@@ -92,16 +92,20 @@ class _GameScreenContentState extends State<_GameScreenContent> {
             ? "Board's Honor" 
             : "Piece's Honor";
         message = '$typeLabel counting reached ${gameState.counting.limit} moves.\nThe game is a draw!';
+      } else if (gameState.counting.isActive) {
+        // Draw due to counting player checkmating
+        title = 'Draw - Counting Rule';
+        message = 'The counting player achieved checkmate.\nBy the counting rules, this is a draw!';
       } else {
         title = 'Draw';
         message = 'The game ended in a draw.';
       }
     } else if (gameState.result == GameResult.whiteWins) {
-      title = 'White Wins!';
-      message = 'Congratulations!';
+      title = 'Checkmate!';
+      message = 'White wins!\nCongratulations!';
     } else if (gameState.result == GameResult.goldWins) {
-      title = 'Gold Wins!';
-      message = 'Congratulations!';
+      title = 'Checkmate!';
+      message = 'Gold wins!\nCongratulations!';
     } else {
       return; // Game not over
     }
@@ -166,7 +170,7 @@ class _GameScreenContentState extends State<_GameScreenContent> {
             previous.gameState.result != current.gameState.result,
         listener: (context, state) {
           if (state.isGameOver) {
-            _showGameOverDialog(context, state);
+            _showGameOverDialog(context, state.gameState);
           }
         },
         builder: (context, state) {
@@ -512,58 +516,5 @@ class _GameScreenContentState extends State<_GameScreenContent> {
       ),
     );
   }
-
-  void _showGameOverDialog(BuildContext context, GameBlocState state) {
-    String title;
-    String message;
-    
-    switch (state.result) {
-      case GameResult.whiteWins:
-        title = '🎉 White Wins!';
-        message = widget.gameMode == GameMode.vsAi 
-            ? 'Congratulations! You defeated the AI!'
-            : 'White player wins by checkmate!';
-      case GameResult.goldWins:
-        title = '🏆 Gold Wins!';
-        message = widget.gameMode == GameMode.vsAi 
-            ? 'The AI wins. Better luck next time!'
-            : 'Gold player wins by checkmate!';
-      case GameResult.draw:
-        title = '🤝 Draw';
-        message = 'The game ended in a draw.';
-      case GameResult.ongoing:
-        return;
-    }
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(title, textAlign: TextAlign.center),
-        content: Text(message, textAlign: TextAlign.center),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              setState(() {
-                _initGame();
-              });
-              context.read<GameBloc>().add(const GameStarted());
-            },
-            child: const Text('Play Again'),
-          ),
-          const SizedBox(width: 8),
-          OutlinedButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              Navigator.pop(context);
-            },
-            child: const Text('Exit'),
-          ),
-        ],
-      ),
-    );
-  }
 }
+

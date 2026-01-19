@@ -47,13 +47,13 @@ class _TestGameScreenState extends State<TestGameScreen> {
         
         // Check if game ended due to counting limit
         if (gameState.isGameOver && mounted) {
-          _showDrawDialog(context, gameState);
+          _showGameOverDialog(context, gameState);
         }
       },
     );
   }
   
-  void _showDrawDialog(BuildContext context, GameState gameState) {
+  void _showGameOverDialog(BuildContext context, GameState gameState) {
     String title;
     String message;
     
@@ -64,16 +64,20 @@ class _TestGameScreenState extends State<TestGameScreen> {
             ? "Board's Honor" 
             : "Piece's Honor";
         message = '$typeLabel counting reached ${gameState.counting.limit} moves.\nThe game is a draw!';
+      } else if (gameState.counting.isActive) {
+        // Draw due to counting player checkmating
+        title = 'Draw - Counting Rule';
+        message = 'The counting player achieved checkmate.\nBy the counting rules, this is a draw!';
       } else {
         title = 'Draw';
         message = 'The game ended in a draw.';
       }
     } else if (gameState.result == GameResult.whiteWins) {
-      title = 'White Wins!';
-      message = 'Congratulations!';
+      title = 'Checkmate!';
+      message = 'White wins!\nCongratulations!';
     } else if (gameState.result == GameResult.goldWins) {
-      title = 'Gold Wins!';
-      message = 'Congratulations!';
+      title = 'Checkmate!';
+      message = 'Gold wins!\nCongratulations!';
     } else {
       return; // Game not over
     }
