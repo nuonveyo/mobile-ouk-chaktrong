@@ -89,6 +89,34 @@ class GameRules {
       }
     }
     
+    // AUTO-START: Check for Piece's Honor counting conditions
+    // If not already counting, check if conditions are met for automatic start
+    if (!newCounting.isActive && result == GameResult.ongoing) {
+      // Check if any player has only King AND no unpromoted fish on board
+      final whitePieces = newBoard.getPieces(PlayerColor.white);
+      final goldPieces = newBoard.getPieces(PlayerColor.gold);
+      
+      final whiteHasOnlyKing = whitePieces.length == 1 && 
+          whitePieces.first.$2.type == PieceType.king;
+      final goldHasOnlyKing = goldPieces.length == 1 && 
+          goldPieces.first.$2.type == PieceType.king;
+      
+      // Check for unpromoted fish
+      final hasUnpromotedFish = whitePieces.any((p) => p.$2.type == PieceType.fish) ||
+          goldPieces.any((p) => p.$2.type == PieceType.fish);
+      
+      // Auto-start Piece's Honor if one player has only King and no fish on board
+      if (!hasUnpromotedFish) {
+        if (whiteHasOnlyKing && !goldHasOnlyKing) {
+          // White has only King, Gold is chasing
+          newCounting = _createPieceHonorCountingAuto(newBoard, PlayerColor.white);
+        } else if (goldHasOnlyKing && !whiteHasOnlyKing) {
+          // Gold has only King, White is chasing
+          newCounting = _createPieceHonorCountingAuto(newBoard, PlayerColor.gold);
+        }
+      }
+    }
+    
     return state.copyWith(
       board: newBoard,
       currentTurn: newTurn,
@@ -102,6 +130,25 @@ class GameRules {
       whiteKingSpecialLost: whiteKingSpecialLost,
       goldKingSpecialLost: goldKingSpecialLost,
       counting: newCounting,
+    );
+  }
+
+  /// Create Piece's Honor counting state for auto-start
+  CountingState _createPieceHonorCountingAuto(
+    BoardState board, 
+    PlayerColor escapingPlayer,
+  ) {
+    final totalPieces = board.getPieces(PlayerColor.white).length + 
+        board.getPieces(PlayerColor.gold).length;
+    final chasingPlayer = escapingPlayer == PlayerColor.white ? PlayerColor.gold : PlayerColor.white;
+    final limit = _calculatePieceHonorLimit(board, chasingPlayer);
+    
+    return CountingState(
+      type: CountingType.pieceHonor,
+      currentCount: totalPieces + 1, // Start at total pieces + 1
+      limit: limit,
+      escapingPlayer: escapingPlayer,
+      isActive: true,
     );
   }
 

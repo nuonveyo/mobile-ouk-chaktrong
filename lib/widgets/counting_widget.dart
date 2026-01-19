@@ -28,11 +28,10 @@ class CountingWidget extends StatelessWidget {
     final counting = gameState.counting;
     final rules = const GameRules();
     
-    // Check if this player can start counting
+    // Check if this player can start Board's Honor counting (manual)
+    // Piece's Honor is automatic and doesn't need a button
     final canStartBoard = !counting.isActive && 
         rules.canStartBoardHonorCounting(gameState.board, playerColor);
-    final canStartPiece = !counting.isActive && 
-        rules.canStartPieceHonorCounting(gameState.board, playerColor);
     
     // Check if this player is the escaping player (can stop counting)
     final isEscapingPlayer = counting.escapingPlayer == playerColor;
@@ -50,9 +49,10 @@ class CountingWidget extends StatelessWidget {
       return _buildChasingPlayerUI();
     }
 
-    // PRIORITY 3: If no counting active and can start, show start buttons
-    if (!counting.isActive && (canStartBoard || canStartPiece)) {
-      return _buildStartCountingButtons(canStartBoard, canStartPiece);
+    // PRIORITY 3: If no counting active and can start Board's Honor, show start button
+    // (Piece's Honor starts automatically, no button needed)
+    if (canStartBoard) {
+      return _buildStartCountingButton();
     }
 
     // Hide if nothing to show
@@ -150,48 +150,24 @@ class CountingWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildStartCountingButtons(bool canStartBoard, bool canStartPiece) {
+  /// Build start button for Board's Honor counting only
+  /// (Piece's Honor starts automatically, no button needed)
+  Widget _buildStartCountingButton() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          if (canStartBoard)
-            Expanded(
-              child: ElevatedButton(
-                onPressed: onStartBoardCounting,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.surface,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                ),
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Start Counting', style: TextStyle(fontSize: 12)),
-                    Text('Board (64)', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
-                  ],
-                ),
-              ),
-            ),
-          if (canStartBoard && canStartPiece) const SizedBox(width: 8),
-          if (canStartPiece)
-            Expanded(
-              child: ElevatedButton(
-                onPressed: onStartPieceCounting,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.templeGold,
-                  foregroundColor: AppColors.deepPurple,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                ),
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Start Counting', style: TextStyle(fontSize: 12)),
-                    Text('Piece Honor', style: TextStyle(fontSize: 10)),
-                  ],
-                ),
-              ),
-            ),
-        ],
+      child: ElevatedButton(
+        onPressed: onStartBoardCounting,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.surface,
+          minimumSize: const Size(double.infinity, 44),
+        ),
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Start Counting', style: TextStyle(fontSize: 14)),
+            Text("Board's Honor (64 moves)", style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+          ],
+        ),
       ),
     );
   }
