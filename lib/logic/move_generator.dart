@@ -6,20 +6,25 @@ class MoveGenerator {
   const MoveGenerator();
 
   /// Get all valid moves for a piece at a given position
+  /// Use gameState version when special moves need to be considered
   List<Move> getValidMoves(BoardState board, Position from, {bool checkLegal = true}) {
+    return getValidMovesWithState(board, from, null, checkLegal: checkLegal);
+  }
+
+  /// Get all valid moves considering special opening moves
+  List<Move> getValidMovesWithState(BoardState board, Position from, GameState? gameState, {bool checkLegal = true}) {
     final piece = board.getPiece(from);
     if (piece == null) return [];
 
     final moves = <Move>[];
 
-
     switch (piece.type) {
       case PieceType.king:
-        moves.addAll(_getKingMoves(board, from, piece));
+        moves.addAll(_getKingMoves(board, from, piece, gameState));
       case PieceType.maiden:
-        moves.addAll(_getDiagonalOneMoves(board, from, piece)); // diagonal only
+        moves.addAll(_getMaidenMoves(board, from, piece, gameState));
       case PieceType.elephant:
-        moves.addAll(_getElephantMoves(board, from, piece)); // diagonal + forward
+        moves.addAll(_getElephantMoves(board, from, piece));
       case PieceType.horse:
         moves.addAll(_getHorseMoves(board, from, piece));
       case PieceType.boat:
@@ -45,9 +50,20 @@ class MoveGenerator {
     return moves;
   }
 
-  /// King moves - 1 square in any direction
-  List<Move> _getKingMoves(BoardState board, Position from, Piece piece) {
+  /// Get all valid moves for a player with special moves
+  List<Move> getAllValidMovesWithState(BoardState board, PlayerColor color, GameState gameState) {
     final moves = <Move>[];
+    for (final (pos, _) in board.getPieces(color)) {
+      moves.addAll(getValidMovesWithState(board, pos, gameState));
+    }
+    return moves;
+  }
+
+  /// King moves - 1 square in any direction + special knight jump on first move
+  List<Move> _getKingMoves(BoardState board, Position from, Piece piece, GameState? gameState) {
+    final moves = <Move>[];
+    
+    // Normal moves: 1 square in any direction
     final offsets = [
       (-1, -1), (-1, 0), (-1, 1),
       (0, -1),          (0, 1),
@@ -60,10 +76,66 @@ class MoveGenerator {
         moves.add(_createMove(board, from, to, piece));
       }
     }
+
+    // Special move: Knight jump to 2nd row on first move
+    // Cannot capture, cannot be in check, and special ability not lost
+    if (gameState != null && gameState.canKingUseSpecial(piece.color)) {
+      // Check not in check
+      if (!isInCheck(board, piece.color)) {
+        // Target row is 1 for white (from row 0), 6 for gold (from row 7)
+        final targetRow = piece.color == PlayerColor.white ? 1 : 6;
+        
+        // Knight jump offsets from king's starting position
+        final knightOffsets = [
+          (-2, -1), (-2, 1), (-1, -2), (-1, 2),
+          (1, -2), (1, 2), (2, -1), (2, 1),
+        ];
+        
+        for (final (dr, dc) in knightOffsets) {
+          final to = from.offset(dr, dc);
+          // Must be valid, on target row, and empty (no capture)
+          if (to.isValid && to.row == targetRow && board.isEmpty(to)) {
+            moves.add(_createMove(board, from, to, piece, isSpecialMove: true));
+          }
+        }
+      }
+    }
+
     return moves;
   }
 
-  /// Diagonal 1 square moves (for Elephant only)
+  /// Maiden moves - 4 diagonal only + special 2 forward on first move
+  List<Move> _getMaidenMoves(BoardState board, Position from, Piece piece, GameState? gameState) {
+    final moves = <Move>[];
+    
+    // Normal moves: 4 diagonal
+    final diagonalOffsets = [(-1, -1), (-1, 1), (1, -1), (1, 1)];
+    for (final (dr, dc) in diagonalOffsets) {
+      final to = from.offset(dr, dc);
+      if (_canMoveTo(board, to, piece.color)) {
+        moves.add(_createMove(board, from, to, piece));
+      }
+    }
+
+    // Special move: 2 squares forward on first move (no capture)
+    if (gameState != null && gameState.canMaidenUseSpecial(piece.color)) {
+      final direction = piece.color == PlayerColor.white ? 1 : -1;
+      final to = from.offset(direction * 2, 0);
+      
+      // Must be valid and empty (no capture)
+      if (to.isValid && board.isEmpty(to)) {
+        // Also check the square in between is empty
+        final inBetween = from.offset(direction, 0);
+        if (board.isEmpty(inBetween)) {
+          moves.add(_createMove(board, from, to, piece, isSpecialMove: true));
+        }
+      }
+    }
+
+    return moves;
+  }
+
+  /// Diagonal 1 square moves (for backward compatibility)
   List<Move> _getDiagonalOneMoves(BoardState board, Position from, Piece piece) {
     final moves = <Move>[];
     final offsets = [(-1, -1), (-1, 1), (1, -1), (1, 1)];
@@ -183,12 +255,13 @@ class MoveGenerator {
   }
 
   /// Create a standard move
-  Move _createMove(BoardState board, Position from, Position to, Piece piece) {
+  Move _createMove(BoardState board, Position from, Position to, Piece piece, {bool isSpecialMove = false}) {
     return Move(
       from: from,
       to: to,
       piece: piece,
       capturedPiece: board.getPiece(to),
+      isSpecialMove: isSpecialMove,
     );
   }
 
@@ -232,5 +305,33 @@ class MoveGenerator {
   bool isStalemate(BoardState board, PlayerColor color) {
     if (isInCheck(board, color)) return false;
     return getAllValidMoves(board, color).isEmpty;
+  }
+
+  /// Check if a rook can "see" the king (for losing king special ability)
+  bool doesRookSeeKing(BoardState board, Position rookPos, PlayerColor kingColor) {
+    final kingPos = board.findKing(kingColor);
+    if (kingPos == null) return false;
+    
+    // Check if on same row or column
+    if (rookPos.row != kingPos.row && rookPos.col != kingPos.col) {
+      return false;
+    }
+    
+    // Check if path is clear (rook can "see" king)
+    if (rookPos.row == kingPos.row) {
+      final minCol = rookPos.col < kingPos.col ? rookPos.col : kingPos.col;
+      final maxCol = rookPos.col > kingPos.col ? rookPos.col : kingPos.col;
+      for (var c = minCol + 1; c < maxCol; c++) {
+        if (board.getPieceAt(rookPos.row, c) != null) return false;
+      }
+      return true;
+    } else {
+      final minRow = rookPos.row < kingPos.row ? rookPos.row : kingPos.row;
+      final maxRow = rookPos.row > kingPos.row ? rookPos.row : kingPos.row;
+      for (var r = minRow + 1; r < maxRow; r++) {
+        if (board.getPieceAt(r, rookPos.col) != null) return false;
+      }
+      return true;
+    }
   }
 }

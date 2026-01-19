@@ -99,7 +99,8 @@ class ChessGame extends FlameGame {
     _clearSelection();
     
     _selectedPosition = position;
-    _validMoves = _moveGenerator.getValidMoves(_gameState.board, position);
+    // Use getValidMovesWithState to include special opening moves
+    _validMoves = _moveGenerator.getValidMovesWithState(_gameState.board, position, _gameState);
 
     // Highlight selected square
     _board.setSelectedSquare(position);

@@ -35,12 +35,57 @@ class GameRules {
     // Add move to history
     final newHistory = [...state.moveHistory, move];
     
+    // Track special move flags
+    bool whiteKingMoved = state.whiteKingMoved;
+    bool goldKingMoved = state.goldKingMoved;
+    bool whiteMaidenMoved = state.whiteMaidenMoved;
+    bool goldMaidenMoved = state.goldMaidenMoved;
+    bool whiteKingSpecialLost = state.whiteKingSpecialLost;
+    bool goldKingSpecialLost = state.goldKingSpecialLost;
+    
+    // Update moved flags based on piece type
+    if (move.piece.type == PieceType.king) {
+      if (move.piece.color == PlayerColor.white) {
+        whiteKingMoved = true;
+      } else {
+        goldKingMoved = true;
+      }
+    } else if (move.piece.type == PieceType.maiden) {
+      if (move.piece.color == PlayerColor.white) {
+        whiteMaidenMoved = true;
+      } else {
+        goldMaidenMoved = true;
+      }
+    }
+    
+    // Check if a rook move causes opponent's king to lose special ability
+    if (move.piece.type == PieceType.boat) {
+      // Check if this rook now "sees" the opponent's king
+      if (move.piece.color == PlayerColor.white) {
+        // White rook moved - check if it sees Gold king
+        if (_moveGenerator.doesRookSeeKing(newBoard, move.to, PlayerColor.gold)) {
+          goldKingSpecialLost = true;
+        }
+      } else {
+        // Gold rook moved - check if it sees White king
+        if (_moveGenerator.doesRookSeeKing(newBoard, move.to, PlayerColor.white)) {
+          whiteKingSpecialLost = true;
+        }
+      }
+    }
+    
     return state.copyWith(
       board: newBoard,
       currentTurn: newTurn,
       moveHistory: newHistory,
       isCheck: isCheck,
       result: result,
+      whiteKingMoved: whiteKingMoved,
+      goldKingMoved: goldKingMoved,
+      whiteMaidenMoved: whiteMaidenMoved,
+      goldMaidenMoved: goldMaidenMoved,
+      whiteKingSpecialLost: whiteKingSpecialLost,
+      goldKingSpecialLost: goldKingSpecialLost,
     );
   }
 
@@ -49,7 +94,7 @@ class GameRules {
     final piece = state.board.getPiece(from);
     if (piece == null || piece.color != state.currentTurn) return false;
     
-    final validMoves = _moveGenerator.getValidMoves(state.board, from);
+    final validMoves = _moveGenerator.getValidMovesWithState(state.board, from, state);
     return validMoves.any((m) => m.to == to);
   }
 
@@ -58,12 +103,12 @@ class GameRules {
     final piece = state.board.getPiece(from);
     if (piece == null || piece.color != state.currentTurn) return [];
     
-    return _moveGenerator.getValidMoves(state.board, from);
+    return _moveGenerator.getValidMovesWithState(state.board, from, state);
   }
 
   /// Get all valid moves for the current player
   List<Move> getAllValidMoves(GameState state) {
-    return _moveGenerator.getAllValidMoves(state.board, state.currentTurn);
+    return _moveGenerator.getAllValidMovesWithState(state.board, state.currentTurn, state);
   }
 
   /// Create a move from positions

@@ -15,6 +15,16 @@ class GameState extends Equatable {
   final int whiteTimeRemaining;
   final int goldTimeRemaining;
 
+  // Special opening move flags
+  final bool whiteKingMoved;
+  final bool goldKingMoved;
+  final bool whiteMaidenMoved;
+  final bool goldMaidenMoved;
+  
+  // King special ability lost (if enemy rook "sees" the king)
+  final bool whiteKingSpecialLost;
+  final bool goldKingSpecialLost;
+
   const GameState({
     required this.board,
     required this.currentTurn,
@@ -23,6 +33,12 @@ class GameState extends Equatable {
     required this.isCheck,
     required this.whiteTimeRemaining,
     required this.goldTimeRemaining,
+    this.whiteKingMoved = false,
+    this.goldKingMoved = false,
+    this.whiteMaidenMoved = false,
+    this.goldMaidenMoved = false,
+    this.whiteKingSpecialLost = false,
+    this.goldKingSpecialLost = false,
   });
 
   /// Create initial game state
@@ -51,6 +67,24 @@ class GameState extends Equatable {
   PlayerColor get opponentTurn =>
       currentTurn == PlayerColor.white ? PlayerColor.gold : PlayerColor.white;
 
+  /// Check if king can use special move
+  bool canKingUseSpecial(PlayerColor color) {
+    if (color == PlayerColor.white) {
+      return !whiteKingMoved && !whiteKingSpecialLost;
+    } else {
+      return !goldKingMoved && !goldKingSpecialLost;
+    }
+  }
+
+  /// Check if maiden can use special move
+  bool canMaidenUseSpecial(PlayerColor color) {
+    if (color == PlayerColor.white) {
+      return !whiteMaidenMoved;
+    } else {
+      return !goldMaidenMoved;
+    }
+  }
+
   /// Get formatted time string for a player
   String getTimeString(PlayerColor color) {
     final seconds = color == PlayerColor.white ? whiteTimeRemaining : goldTimeRemaining;
@@ -68,6 +102,12 @@ class GameState extends Equatable {
     bool? isCheck,
     int? whiteTimeRemaining,
     int? goldTimeRemaining,
+    bool? whiteKingMoved,
+    bool? goldKingMoved,
+    bool? whiteMaidenMoved,
+    bool? goldMaidenMoved,
+    bool? whiteKingSpecialLost,
+    bool? goldKingSpecialLost,
   }) {
     return GameState(
       board: board ?? this.board,
@@ -77,6 +117,12 @@ class GameState extends Equatable {
       isCheck: isCheck ?? this.isCheck,
       whiteTimeRemaining: whiteTimeRemaining ?? this.whiteTimeRemaining,
       goldTimeRemaining: goldTimeRemaining ?? this.goldTimeRemaining,
+      whiteKingMoved: whiteKingMoved ?? this.whiteKingMoved,
+      goldKingMoved: goldKingMoved ?? this.goldKingMoved,
+      whiteMaidenMoved: whiteMaidenMoved ?? this.whiteMaidenMoved,
+      goldMaidenMoved: goldMaidenMoved ?? this.goldMaidenMoved,
+      whiteKingSpecialLost: whiteKingSpecialLost ?? this.whiteKingSpecialLost,
+      goldKingSpecialLost: goldKingSpecialLost ?? this.goldKingSpecialLost,
     );
   }
 
@@ -89,5 +135,11 @@ class GameState extends Equatable {
         isCheck,
         whiteTimeRemaining,
         goldTimeRemaining,
+        whiteKingMoved,
+        goldKingMoved,
+        whiteMaidenMoved,
+        goldMaidenMoved,
+        whiteKingSpecialLost,
+        goldKingSpecialLost,
       ];
 }

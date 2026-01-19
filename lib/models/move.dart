@@ -11,6 +11,7 @@ class Move extends Equatable {
   final Piece? capturedPiece;
   final bool isPromotion;
   final Piece? promotedTo;
+  final bool isSpecialMove; // King's knight jump or Maiden's 2-forward
 
   const Move({
     required this.from,
@@ -19,6 +20,7 @@ class Move extends Equatable {
     this.capturedPiece,
     this.isPromotion = false,
     this.promotedTo,
+    this.isSpecialMove = false,
   });
 
   /// Check if this move captures a piece
@@ -55,7 +57,7 @@ class Move extends Equatable {
   }
 
   @override
-  List<Object?> get props => [from, to, piece, capturedPiece, isPromotion, promotedTo];
+  List<Object?> get props => [from, to, piece, capturedPiece, isPromotion, promotedTo, isSpecialMove];
 
   @override
   String toString() => notation;
