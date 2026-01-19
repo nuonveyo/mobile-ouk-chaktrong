@@ -12,13 +12,14 @@ class MoveGenerator {
 
     final moves = <Move>[];
 
+
     switch (piece.type) {
       case PieceType.king:
         moves.addAll(_getKingMoves(board, from, piece));
       case PieceType.maiden:
-        moves.addAll(_getDiagonalOneMoves(board, from, piece));
+        moves.addAll(_getDiagonalOneMoves(board, from, piece)); // diagonal only
       case PieceType.elephant:
-        moves.addAll(_getDiagonalOneMoves(board, from, piece));
+        moves.addAll(_getElephantMoves(board, from, piece)); // diagonal + forward
       case PieceType.horse:
         moves.addAll(_getHorseMoves(board, from, piece));
       case PieceType.boat:
@@ -62,7 +63,7 @@ class MoveGenerator {
     return moves;
   }
 
-  /// Diagonal 1 square moves (for Maiden and Elephant)
+  /// Diagonal 1 square moves (for Elephant only)
   List<Move> _getDiagonalOneMoves(BoardState board, Position from, Piece piece) {
     final moves = <Move>[];
     final offsets = [(-1, -1), (-1, 1), (1, -1), (1, 1)];
@@ -73,6 +74,29 @@ class MoveGenerator {
         moves.add(_createMove(board, from, to, piece));
       }
     }
+    return moves;
+  }
+
+  /// Elephant moves - 4 diagonal + 1 forward
+  List<Move> _getElephantMoves(BoardState board, Position from, Piece piece) {
+    final moves = <Move>[];
+    final direction = piece.color == PlayerColor.white ? 1 : -1;
+    
+    // 4 diagonal moves
+    final diagonalOffsets = [(-1, -1), (-1, 1), (1, -1), (1, 1)];
+    for (final (dr, dc) in diagonalOffsets) {
+      final to = from.offset(dr, dc);
+      if (_canMoveTo(board, to, piece.color)) {
+        moves.add(_createMove(board, from, to, piece));
+      }
+    }
+    
+    // 1 forward move
+    final forward = from.offset(direction, 0);
+    if (_canMoveTo(board, forward, piece.color)) {
+      moves.add(_createMove(board, from, forward, piece));
+    }
+    
     return moves;
   }
 

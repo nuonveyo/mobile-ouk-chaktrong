@@ -55,10 +55,11 @@ class BoardState extends Equatable {
     squares[row][5] = Piece(type: PieceType.elephant, color: color);
     
     // Maiden and King in center
-    // In Khmer chess, King is on e-file for both sides
+    // White: King on left (col 3), Maiden on right (col 4)
+    // Gold: Maiden on left (col 3), King on right (col 4)
     if (color == PlayerColor.white) {
-      squares[row][3] = Piece(type: PieceType.maiden, color: color);
-      squares[row][4] = Piece(type: PieceType.king, color: color);
+      squares[row][3] = Piece(type: PieceType.king, color: color);
+      squares[row][4] = Piece(type: PieceType.maiden, color: color);
     } else {
       squares[row][3] = Piece(type: PieceType.maiden, color: color);
       squares[row][4] = Piece(type: PieceType.king, color: color);
