@@ -80,19 +80,19 @@ class _GameScreenContentState extends State<_GameScreenContent> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => _showExitConfirmDialog(context),
-        ),
-        title: Text(_getGameModeTitle()),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => _confirmNewGame(context),
-          ),
-        ],
-      ),
+      // appBar: AppBar(
+      //   leading: IconButton(
+      //     icon: const Icon(Icons.arrow_back),
+      //     onPressed: () => _showExitConfirmDialog(context),
+      //   ),
+      //   title: Text(_getGameModeTitle()),
+      //   actions: [
+      //     IconButton(
+      //       icon: const Icon(Icons.refresh),
+      //       onPressed: () => _confirmNewGame(context),
+      //     ),
+      //   ],
+      // ),
       body: BlocConsumer<GameBloc, GameBlocState>(
         listenWhen: (previous, current) => 
             previous.gameState.result != current.gameState.result,
@@ -185,32 +185,32 @@ class _GameScreenContentState extends State<_GameScreenContent> {
                   ),
                 
                 // Action buttons
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildActionButton(
-                        Icons.undo,
-                        'Undo',
-                        gameState.moveHistory.isNotEmpty,
-                        () => _game?.undoMove(),
-                      ),
-                      _buildActionButton(
-                        Icons.flag_outlined,
-                        'Resign',
-                        !gameState.isGameOver,
-                        () => _confirmResign(context),
-                      ),
-                      _buildActionButton(
-                        Icons.handshake_outlined,
-                        'Draw',
-                        !gameState.isGameOver && widget.gameMode != GameMode.vsAi,
-                        () => _offerDraw(context),
-                      ),
-                    ],
-                  ),
-                ),
+                // Padding(
+                //   padding: const EdgeInsets.all(16),
+                //   child: Row(
+                //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                //     children: [
+                //       _buildActionButton(
+                //         Icons.undo,
+                //         'Undo',
+                //         gameState.moveHistory.isNotEmpty,
+                //         () => _game?.undoMove(),
+                //       ),
+                //       _buildActionButton(
+                //         Icons.flag_outlined,
+                //         'Resign',
+                //         !gameState.isGameOver,
+                //         () => _confirmResign(context),
+                //       ),
+                //       _buildActionButton(
+                //         Icons.handshake_outlined,
+                //         'Draw',
+                //         !gameState.isGameOver && widget.gameMode != GameMode.vsAi,
+                //         () => _offerDraw(context),
+                //       ),
+                //     ],
+                //   ),
+                // ),
               ],
             ),
           );
