@@ -72,7 +72,75 @@ class _GameScreenContentState extends State<_GameScreenContent> {
         setState(() {
           _currentGameState = gameState;
         });
+        
+        // Check if game ended due to counting limit or other draw/win
+        if (gameState.isGameOver && mounted) {
+          _showDrawDialog(context, gameState);
+        }
       },
+    );
+  }
+  
+  void _showDrawDialog(BuildContext context, GameState gameState) {
+    String title;
+    String message;
+    
+    if (gameState.result == GameResult.draw) {
+      if (gameState.counting.hasReachedLimit) {
+        title = 'Draw - Counting Limit Reached';
+        final typeLabel = gameState.counting.type == CountingType.boardHonor 
+            ? "Board's Honor" 
+            : "Piece's Honor";
+        message = '$typeLabel counting reached ${gameState.counting.limit} moves.\nThe game is a draw!';
+      } else {
+        title = 'Draw';
+        message = 'The game ended in a draw.';
+      }
+    } else if (gameState.result == GameResult.whiteWins) {
+      title = 'White Wins!';
+      message = 'Congratulations!';
+    } else if (gameState.result == GameResult.goldWins) {
+      title = 'Gold Wins!';
+      message = 'Congratulations!';
+    } else {
+      return; // Game not over
+    }
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(
+          title,
+          style: const TextStyle(color: AppColors.templeGold),
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(color: AppColors.textPrimary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pop(); // Go back to home
+            },
+            child: const Text('Back to Home'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              setState(() {
+                _initGame(); // Restart game
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.templeGold,
+            ),
+            child: const Text('Play Again'),
+          ),
+        ],
+      ),
     );
   }
 
