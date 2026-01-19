@@ -16,12 +16,18 @@ class BoardState extends Equatable {
   factory BoardState.initial() {
     final squares = List.generate(8, (_) => List<Piece?>.filled(8, null));
 
-    // White pieces (bottom, rows 0-1)
+    // White pieces (bottom)
+    // Row 0: Back pieces
+    // Row 1: BLANK
+    // Row 2: Fish
     _setupRank(squares, 0, PlayerColor.white);
-    _setupFishRank(squares, 1, PlayerColor.white);
+    _setupFishRank(squares, 2, PlayerColor.white);
 
-    // Gold pieces (top, rows 6-7)
-    _setupFishRank(squares, 6, PlayerColor.gold);
+    // Gold pieces (top)
+    // Row 5: Fish
+    // Row 6: BLANK
+    // Row 7: Back pieces
+    _setupFishRank(squares, 5, PlayerColor.gold);
     _setupRank(squares, 7, PlayerColor.gold);
 
     return BoardState._(squares);
