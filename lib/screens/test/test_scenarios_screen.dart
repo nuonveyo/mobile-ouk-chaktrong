@@ -86,6 +86,21 @@ class TestScenariosScreen extends StatelessWidget {
             description: 'White: King + Fish near promotion\nGold: King + Queen',
             scenario: TestScenario.nearPromotion,
           ),
+          
+          const SizedBox(height: 24),
+          _buildSectionHeader('Arb (Boat Indirect Attack)'),
+          _buildScenarioCard(
+            context,
+            title: 'Arb - Gold King Trapped',
+            description: 'White Boat on same file as Gold King\nGold has NO legal moves\nResult: Draw',
+            scenario: TestScenario.arbGoldTrapped,
+          ),
+          _buildScenarioCard(
+            context,
+            title: 'Arb - White King Trapped',
+            description: 'Gold Boat on same rank as White King\nWhite has NO legal moves\nResult: Draw',
+            scenario: TestScenario.arbWhiteTrapped,
+          ),
         ],
       ),
     );
@@ -154,6 +169,8 @@ enum TestScenario {
   whitePieceHonor1Maiden,
   bothCanCount,
   nearPromotion,
+  arbGoldTrapped,
+  arbWhiteTrapped,
 }
 
 /// Get preset board state for a scenario
@@ -255,6 +272,29 @@ BoardState getScenarioBoardState(TestScenario scenario) {
         const Position(4, 3): const Piece(type: PieceType.fish, color: PlayerColor.white), // Near promotion row 5
         const Position(7, 4): const Piece(type: PieceType.king, color: PlayerColor.gold),
         const Position(7, 3): const Piece(type: PieceType.maiden, color: PlayerColor.gold),
+      });
+
+    case TestScenario.arbGoldTrapped:
+      // Arb scenario: Boat on same file as King, King trapped in corner
+      // Gold King at h8, White Boat at h1 (same file), Gold King can't move
+      // White pieces block all escape squares
+      return _createBoard({
+        const Position(0, 4): const Piece(type: PieceType.king, color: PlayerColor.white),
+        const Position(0, 7): const Piece(type: PieceType.boat, color: PlayerColor.white), // h1 - same file as Gold King
+        const Position(5, 6): const Piece(type: PieceType.boat, color: PlayerColor.white), // Blocks g6
+        const Position(6, 7): const Piece(type: PieceType.maiden, color: PlayerColor.white), // Controls g7, h7
+        const Position(7, 7): const Piece(type: PieceType.king, color: PlayerColor.gold), // h8 - trapped!
+      });
+
+    case TestScenario.arbWhiteTrapped:
+      // Arb scenario: Boat on same rank as King, King trapped
+      // White King at a1, Gold Boat at h1 (same rank), White King can't move
+      return _createBoard({
+        const Position(0, 0): const Piece(type: PieceType.king, color: PlayerColor.white), // a1 - trapped!
+        const Position(0, 7): const Piece(type: PieceType.boat, color: PlayerColor.gold), // h1 - same rank
+        const Position(1, 0): const Piece(type: PieceType.boat, color: PlayerColor.gold), // a2 - blocks escape
+        const Position(1, 1): const Piece(type: PieceType.maiden, color: PlayerColor.gold), // b2 - controls a1, b1
+        const Position(7, 4): const Piece(type: PieceType.king, color: PlayerColor.gold),
       });
   }
 }

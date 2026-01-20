@@ -245,6 +245,10 @@ class _TestGameScreenState extends State<TestGameScreen> {
         return 'Both Can Count';
       case TestScenario.nearPromotion:
         return 'Near Promotion';
+      case TestScenario.arbGoldTrapped:
+        return 'Arb: Gold King Trapped';
+      case TestScenario.arbWhiteTrapped:
+        return 'Arb: White King Trapped';
     }
   }
 
