@@ -12,6 +12,7 @@ export 'online_game_state.dart';
 class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
   final AuthRepository _authRepository;
   final OnlineGameRepository _gameRepository;
+  final UserRepository _userRepository;
   
   StreamSubscription? _roomSubscription;
   StreamSubscription? _availableRoomsSubscription;
@@ -19,8 +20,10 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
   OnlineGameBloc({
     required AuthRepository authRepository,
     required OnlineGameRepository gameRepository,
+    UserRepository? userRepository,
   })  : _authRepository = authRepository,
         _gameRepository = gameRepository,
+        _userRepository = userRepository ?? UserRepository(),
         super(OnlineGameBlocState.initial()) {
     on<CreateRoomRequested>(_onCreateRoom);
     on<JoinRoomRequested>(_onJoinRoom);
@@ -78,9 +81,13 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     try {
       final user = await _authRepository.ensureSignedIn();
       
+      // Get player name from local database
+      final localUser = await _userRepository.getUser();
+      final playerName = localUser.name;
+      
       final room = await _gameRepository.createRoom(
         hostPlayerId: user.uid,
-        hostPlayerName: 'Player ${user.uid.substring(0, 4)}',
+        hostPlayerName: playerName,
         timeControl: event.timeControl,
       );
 
@@ -110,10 +117,14 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     try {
       final user = await _authRepository.ensureSignedIn();
       
+      // Get player name from local database
+      final localUser = await _userRepository.getUser();
+      final playerName = localUser.name;
+      
       final room = await _gameRepository.joinRoom(
         roomId: event.roomId,
         guestPlayerId: user.uid,
-        guestPlayerName: 'Player ${user.uid.substring(0, 4)}',
+        guestPlayerName: playerName,
       );
 
       if (room == null) {
