@@ -55,6 +55,9 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
   final ValueNotifier<GameState?> _gameStateNotifier = ValueNotifier(null);
   final ValueNotifier<bool> _isMyTurnNotifier = ValueNotifier(false);
   
+  // Store room data without triggering widget rebuilds
+  OnlineGameRoom? _room;
+  
   String? _localPlayerId;
   PlayerColor? _localPlayerColor;
   bool _isGameInitialized = false;
@@ -78,6 +81,7 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
     if (_isGameInitialized) return;
     _isGameInitialized = true;
     
+    _room = room;  // Store room locally
     _localPlayerId = localPlayerId;
     _localPlayerColor = room.hostPlayerId == localPlayerId 
         ? PlayerColor.white 
@@ -282,28 +286,24 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<OnlineGameBloc, OnlineGameBlocState>(
+    // If game is initialized, don't use BlocConsumer at all - prevents rebuilds
+    if (_isGameInitialized && _game != null && _room != null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: _buildAppBar(),
+        body: SafeArea(child: _buildGameContent()),
+      );
+    }
+    
+    // Only use BlocListener during initialization phase
+    return BlocListener<OnlineGameBloc, OnlineGameBlocState>(
       listenWhen: (prev, curr) => prev.currentRoom != curr.currentRoom || prev.playerId != curr.playerId,
       listener: (context, state) {
-        debugPrint('BLoC listener: room=${state.currentRoom?.id}, playerId=${state.playerId}, isGameInit=$_isGameInitialized');
         if (state.currentRoom != null && state.playerId != null && !_isGameInitialized) {
           _initGame(state.currentRoom!, state.playerId!);
         }
       },
-      builder: (context, blocState) {
-        debugPrint('BLoC builder: room=${blocState.currentRoom?.id}, isGameInit=$_isGameInitialized, game=$_game');
-        
-        // Show loading if not initialized yet
-        if (!_isGameInitialized || _game == null || blocState.currentRoom == null) {
-          return _buildLoadingScreen();
-        }
-
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: _buildAppBar(),
-          body: SafeArea(child: _buildGameContent(blocState)),
-        );
-      },
+      child: _buildLoadingScreen(),
     );
   }
 
@@ -345,13 +345,11 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
     );
   }
 
-  Widget _buildGameContent(OnlineGameBlocState blocState) {
-    final room = blocState.currentRoom!;
-    
+  Widget _buildGameContent() {
     return Column(
       children: [
         // Opponent info - uses ValueListenableBuilder
-        _buildOpponentInfoCard(room),
+        _buildOpponentInfoCard(_room!),
         
         // Opponent counting widget
         _buildCountingWidget(isOpponent: true),
@@ -372,7 +370,7 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
         ),
         
         // Local player info
-        _buildLocalPlayerInfoCard(room),
+        _buildLocalPlayerInfoCard(_room!),
         
         // Local counting widget
         _buildCountingWidget(isOpponent: false),
@@ -526,7 +524,7 @@ class OnlineChessGame extends FlameGame {
     _gameState = _rules.applyMove(_gameState, move);
     _board.animateMove(move);
     _board.setLastMove(move.from, move.to);
-    _board.syncPieces(_gameState.board);
+    // Don't call syncPieces - animateMove already handles piece updates smoothly
     onGameStateChanged?.call(_gameState);
   }
 
