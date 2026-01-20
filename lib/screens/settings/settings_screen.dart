@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../services/sound_service.dart';
+import '../../repositories/user_repository.dart';
+import '../../models/user.dart';
 
 /// Settings screen with sound, vibration, and language options
 class SettingsScreen extends StatefulWidget {
@@ -16,6 +18,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _soundEnabled = true;
   bool _vibrationEnabled = true;
   String _selectedLanguage = 'en';
+  User? _user;
+  final UserRepository _userRepository = UserRepository();
 
   @override
   void initState() {
@@ -27,9 +31,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await appStrings.init();
     await SoundService().init();
     
+    final user = await _userRepository.getUser();
+    
     setState(() {
       _soundEnabled = SoundService().soundEnabled;
       _selectedLanguage = appStrings.locale.languageCode;
+      _user = user;
     });
   }
 
@@ -43,6 +50,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Player Stats Section
+          _buildSection(
+            'Player Stats',
+            [
+              _buildInfoTile(
+                icon: Icons.person,
+                title: 'Username',
+                subtitle: _user?.name ?? 'Loading...',
+              ),
+              _buildInfoTile(
+                icon: Icons.emoji_events,
+                title: 'Total Points',
+                subtitle: '🏆 ${_user?.points ?? 0} pts',
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           _buildSection(
             appStrings.gameSettings,
             [

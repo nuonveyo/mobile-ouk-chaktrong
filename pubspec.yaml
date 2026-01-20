@@ -32,6 +32,8 @@ dependencies:
   shared_preferences: ^2.3.3
   uuid: ^4.5.1
   intl: ^0.20.2
+  sqflite: ^2.3.0
+  path: ^1.8.3
 
   cupertino_icons: ^1.0.8
   flutter_svg: ^2.0.10+1

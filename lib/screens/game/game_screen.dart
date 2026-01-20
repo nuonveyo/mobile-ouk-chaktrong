@@ -9,6 +9,7 @@ import '../../blocs/game/game_bloc.dart';
 import '../../game/chess_game.dart';
 import '../../widgets/player_info_card.dart';
 import '../../widgets/counting_widget.dart';
+import '../../repositories/user_repository.dart';
 
 /// Game screen with Flame game widget and BLoC state management
 class GameScreen extends StatelessWidget {
@@ -81,9 +82,11 @@ class _GameScreenContentState extends State<_GameScreenContent> {
     );
   }
   
-  void _showGameOverDialog(BuildContext context, GameState gameState) {
+  void _showGameOverDialog(BuildContext context, GameState gameState) async {
     String title;
     String message;
+    bool isWin = false;
+    int pointsAwarded = 0;
     
     if (gameState.result == GameResult.draw) {
       if (gameState.counting.hasReachedLimit) {
@@ -101,14 +104,24 @@ class _GameScreenContentState extends State<_GameScreenContent> {
         message = 'The game ended in a draw.';
       }
     } else if (gameState.result == GameResult.whiteWins) {
-      title = 'Checkmate!';
+      title = '🎉 Checkmate!';
       message = 'White wins!\nCongratulations!';
+      isWin = true;
     } else if (gameState.result == GameResult.goldWins) {
-      title = 'Checkmate!';
+      title = '🎉 Checkmate!';
       message = 'Gold wins!\nCongratulations!';
+      isWin = true;
     } else {
       return; // Game not over
     }
+    
+    // Award points for winning
+    if (isWin) {
+      pointsAwarded = await UserRepository().awardWin();
+      message += '\n\n🏆 +$pointsAwarded points!';
+    }
+    
+    if (!context.mounted) return;
     
     showDialog(
       context: context,

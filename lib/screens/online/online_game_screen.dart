@@ -272,7 +272,7 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
     _showGameOverDialog(newState);
   }
 
-  void _showGameOverDialog(GameState gameState) {
+  void _showGameOverDialog(GameState gameState) async {
     final isLocalWinner = 
         (gameState.result == GameResult.whiteWins && _localPlayerColor == PlayerColor.white) ||
         (gameState.result == GameResult.goldWins && _localPlayerColor == PlayerColor.gold);
@@ -281,6 +281,14 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
         : isLocalWinner ? '🎉 You Win!' : 'Game Over';
     String message = gameState.result == GameResult.draw ? 'The game ended in a draw.'
         : isLocalWinner ? 'Congratulations!' : 'Your opponent wins.';
+    
+    // Award points for winning
+    if (isLocalWinner) {
+      final pointsAwarded = await UserRepository().awardWin();
+      message += '\n\n🏆 +$pointsAwarded points!';
+    }
+    
+    if (!mounted) return;
     
     showDialog(
       context: context,
