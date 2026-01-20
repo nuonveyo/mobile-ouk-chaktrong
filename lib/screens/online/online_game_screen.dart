@@ -138,9 +138,13 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
 
   Move? _parseMoveNotation(String notation, BoardState board, PlayerColor turn) {
     try {
-      final parts = notation.contains('x') 
-          ? notation.split('x') 
-          : notation.split('-');
+      // Check for promotion suffix (=M)
+      bool isPromotion = notation.contains('=M');
+      String cleanNotation = notation.replaceAll('=M', '');
+      
+      final parts = cleanNotation.contains('x') 
+          ? cleanNotation.split('x') 
+          : cleanNotation.split('-');
       
       if (parts.length != 2) return null;
       
@@ -152,11 +156,19 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
       final piece = board.getPiece(from);
       if (piece == null) return null;
       
+      // If promotion, create the promoted piece (maiden)
+      Piece? promotedTo;
+      if (isPromotion) {
+        promotedTo = Piece(type: PieceType.maiden, color: piece.color);
+      }
+      
       return Move(
         from: from,
         to: to,
         piece: piece,
         capturedPiece: board.getPiece(to),
+        isPromotion: isPromotion,
+        promotedTo: promotedTo,
       );
     } catch (e) {
       return null;
@@ -227,7 +239,14 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
   String _moveToNotation(Move move) {
     final from = _positionToString(move.from);
     final to = _positionToString(move.to);
-    return '$from${move.isCapture ? 'x' : '-'}$to';
+    String notation = '$from${move.isCapture ? 'x' : '-'}$to';
+    
+    // Add promotion suffix: =M for maiden (promoted fish)
+    if (move.isPromotion && move.promotedTo != null) {
+      notation += '=M';  // M for maiden
+    }
+    
+    return notation;
   }
 
   String _positionToString(Position pos) {
