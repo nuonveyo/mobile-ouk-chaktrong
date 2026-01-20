@@ -48,13 +48,17 @@ class _OnlineGameContent extends StatefulWidget {
 class _OnlineGameContentState extends State<_OnlineGameContent> {
   OnlineChessGame? _game;
   final GameRules _rules = const GameRules();
-  GameState? _currentGameState;
   StreamSubscription? _roomSubscription;
   OnlineGameRepository? _repository;
+  
+  // Use ValueNotifier for granular UI updates
+  final ValueNotifier<GameState?> _gameStateNotifier = ValueNotifier(null);
+  final ValueNotifier<bool> _isMyTurnNotifier = ValueNotifier(false);
   
   String? _localPlayerId;
   PlayerColor? _localPlayerColor;
   bool _isGameInitialized = false;
+  bool _gameOverDialogShown = false;
 
   @override
   void initState() {
@@ -65,6 +69,8 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
   @override
   void dispose() {
     _roomSubscription?.cancel();
+    _gameStateNotifier.dispose();
+    _isMyTurnNotifier.dispose();
     super.dispose();
   }
 
@@ -73,17 +79,11 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
     _isGameInitialized = true;
     
     _localPlayerId = localPlayerId;
-    
-    // Determine local player's color
-    // Host plays White, Guest plays Gold
     _localPlayerColor = room.hostPlayerId == localPlayerId 
         ? PlayerColor.white 
         : PlayerColor.gold;
 
-    // Rebuild board from move history if exists
-    GameState initialState = GameState.initial(
-      timeControl: room.timeControl,
-    );
+    GameState initialState = GameState.initial(timeControl: room.timeControl);
     
     if (room.gameData != null && room.gameData!.moves.isNotEmpty) {
       initialState = _rebuildStateFromMoves(room.gameData!.moves, room.gameData!);
@@ -93,25 +93,27 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
       initialState: initialState,
       localPlayerColor: _localPlayerColor!,
       onMoveMade: _onLocalMoveMade,
-      onGameStateChanged: (gameState) {
-        if (mounted) {
-          setState(() {
-            _currentGameState = gameState;
-          });
-          
-          if (gameState.isGameOver) {
-            _handleGameOver(gameState);
-          }
-        }
-      },
+      onGameStateChanged: _onGameStateChanged,
     );
     
-    setState(() {
-      _currentGameState = initialState;
-    });
-
-    // Start listening for room updates
+    _gameStateNotifier.value = initialState;
+    _isMyTurnNotifier.value = initialState.currentTurn == _localPlayerColor;
+    
+    // Force one setState to show the game board
+    setState(() {});
+    
     _startListeningToRoom();
+  }
+
+  // Optimized: Only update notifiers, no full rebuild
+  void _onGameStateChanged(GameState gameState) {
+    _gameStateNotifier.value = gameState;
+    _isMyTurnNotifier.value = gameState.currentTurn == _localPlayerColor;
+    
+    if (gameState.isGameOver && !_gameOverDialogShown) {
+      _gameOverDialogShown = true;
+      _handleGameOver(gameState);
+    }
   }
 
   GameState _rebuildStateFromMoves(List<String> moves, OnlineGameData gameData) {
@@ -124,7 +126,6 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
       }
     }
     
-    // Update times from server
     return state.copyWith(
       whiteTimeRemaining: gameData.whiteTimeRemaining,
       goldTimeRemaining: gameData.goldTimeRemaining,
@@ -132,7 +133,6 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
   }
 
   Move? _parseMoveNotation(String notation, BoardState board, PlayerColor turn) {
-    // Parse format: "e2-e4" or "e2xe4" (capture)
     try {
       final parts = notation.contains('x') 
           ? notation.split('x') 
@@ -148,13 +148,11 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
       final piece = board.getPiece(from);
       if (piece == null) return null;
       
-      final capturedPiece = board.getPiece(to);
-      
       return Move(
         from: from,
         to: to,
         piece: piece,
-        capturedPiece: capturedPiece,
+        capturedPiece: board.getPiece(to),
       );
     } catch (e) {
       return null;
@@ -175,38 +173,32 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
       (room) {
         if (room == null || _game == null) return;
         
-        // Check if there's a new move from opponent
         final gameData = room.gameData;
         if (gameData != null && gameData.moves.isNotEmpty) {
-          final expectedMoves = _currentGameState?.moveHistory.length ?? 0;
+          final expectedMoves = _gameStateNotifier.value?.moveHistory.length ?? 0;
           
           if (gameData.moves.length > expectedMoves) {
-            // Apply new moves
             for (int i = expectedMoves; i < gameData.moves.length; i++) {
-              final moveNotation = gameData.moves[i];
-              _applyRemoteMove(moveNotation);
+              _applyRemoteMove(gameData.moves[i]);
             }
           }
         }
         
-        // Check if game ended
-        if (room.isFinished && gameData?.result != null) {
+        if (room.isFinished && gameData?.result != null && !_gameOverDialogShown) {
           _handleRemoteGameEnd(gameData!.result!);
         }
       },
-      onError: (error) {
-        debugPrint('Room subscription error: $error');
-      },
+      onError: (error) => debugPrint('Room subscription error: $error'),
     );
   }
 
   void _applyRemoteMove(String moveNotation) {
-    if (_game == null || _currentGameState == null) return;
+    if (_game == null || _gameStateNotifier.value == null) return;
     
     final move = _parseMoveNotation(
       moveNotation, 
-      _currentGameState!.board, 
-      _currentGameState!.currentTurn,
+      _gameStateNotifier.value!.board, 
+      _gameStateNotifier.value!.currentTurn,
     );
     
     if (move != null) {
@@ -215,7 +207,6 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
   }
 
   void _onLocalMoveMade(Move move, GameState newState) {
-    // Convert move to notation and send to Firestore
     final notation = _moveToNotation(move);
     
     _repository!.makeMove(
@@ -232,67 +223,41 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
   String _moveToNotation(Move move) {
     final from = _positionToString(move.from);
     final to = _positionToString(move.to);
-    final separator = move.isCapture ? 'x' : '-';
-    return '$from$separator$to';
+    return '$from${move.isCapture ? 'x' : '-'}$to';
   }
 
   String _positionToString(Position pos) {
-    final col = String.fromCharCode('a'.codeUnitAt(0) + pos.col);
-    final row = (pos.row + 1).toString();
-    return '$col$row';
+    return '${String.fromCharCode('a'.codeUnitAt(0) + pos.col)}${pos.row + 1}';
   }
 
   void _handleGameOver(GameState gameState) {
-    String result;
-    if (gameState.result == GameResult.whiteWins) {
-      result = 'white';
-    } else if (gameState.result == GameResult.goldWins) {
-      result = 'gold';
-    } else {
-      result = 'draw';
-    }
+    String result = gameState.result == GameResult.whiteWins ? 'white'
+        : gameState.result == GameResult.goldWins ? 'gold' : 'draw';
     
     _repository!.endGame(roomId: widget.roomId, result: result);
     _showGameOverDialog(gameState);
   }
 
   void _handleRemoteGameEnd(String result) {
-    if (_currentGameState?.isGameOver == true) return;
+    _gameOverDialogShown = true;
     
-    GameResult gameResult;
-    if (result == 'white') {
-      gameResult = GameResult.whiteWins;
-    } else if (result == 'gold') {
-      gameResult = GameResult.goldWins;
-    } else {
-      gameResult = GameResult.draw;
-    }
+    GameResult gameResult = result == 'white' ? GameResult.whiteWins
+        : result == 'gold' ? GameResult.goldWins : GameResult.draw;
     
-    final newState = _currentGameState!.copyWith(result: gameResult);
-    setState(() {
-      _currentGameState = newState;
-    });
+    final newState = _gameStateNotifier.value!.copyWith(result: gameResult);
+    _gameStateNotifier.value = newState;
     _showGameOverDialog(newState);
   }
 
   void _showGameOverDialog(GameState gameState) {
-    String title;
-    String message;
-    
     final isLocalWinner = 
         (gameState.result == GameResult.whiteWins && _localPlayerColor == PlayerColor.white) ||
         (gameState.result == GameResult.goldWins && _localPlayerColor == PlayerColor.gold);
     
-    if (gameState.result == GameResult.draw) {
-      title = 'Draw';
-      message = 'The game ended in a draw.';
-    } else if (isLocalWinner) {
-      title = '🎉 You Win!';
-      message = 'Congratulations on your victory!';
-    } else {
-      title = 'Game Over';
-      message = 'Your opponent wins. Better luck next time!';
-    }
+    String title = gameState.result == GameResult.draw ? 'Draw'
+        : isLocalWinner ? '🎉 You Win!' : 'Game Over';
+    String message = gameState.result == GameResult.draw ? 'The game ended in a draw.'
+        : isLocalWinner ? 'Congratulations!' : 'Your opponent wins.';
     
     showDialog(
       context: context,
@@ -305,7 +270,7 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
           ElevatedButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              Navigator.of(context).pop(); // Back to lobby
+              Navigator.of(context).pop();
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.templeGold),
             child: const Text('Back to Lobby'),
@@ -318,137 +283,168 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<OnlineGameBloc, OnlineGameBlocState>(
-      listenWhen: (previous, current) => 
-          previous.currentRoom != current.currentRoom ||
-          previous.playerId != current.playerId,
+      listenWhen: (prev, curr) => prev.currentRoom != curr.currentRoom || prev.playerId != curr.playerId,
       listener: (context, state) {
+        debugPrint('BLoC listener: room=${state.currentRoom?.id}, playerId=${state.playerId}, isGameInit=$_isGameInitialized');
         if (state.currentRoom != null && state.playerId != null && !_isGameInitialized) {
           _initGame(state.currentRoom!, state.playerId!);
         }
       },
-      builder: (context, state) {
-        if (!_isGameInitialized || _game == null) {
-          return Scaffold(
-            backgroundColor: AppColors.background,
-            appBar: AppBar(
-              title: const Text('Online Game'),
-              backgroundColor: AppColors.deepPurple,
-            ),
-            body: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(color: AppColors.templeGold),
-                  SizedBox(height: 16),
-                  Text('Connecting...', style: TextStyle(color: AppColors.textSecondary)),
-                ],
-              ),
-            ),
-          );
+      builder: (context, blocState) {
+        debugPrint('BLoC builder: room=${blocState.currentRoom?.id}, isGameInit=$_isGameInitialized, game=$_game');
+        
+        // Show loading if not initialized yet
+        if (!_isGameInitialized || _game == null || blocState.currentRoom == null) {
+          return _buildLoadingScreen();
         }
 
-        final room = state.currentRoom!;
-        final gameState = _currentGameState ?? _game!.gameState;
-        final isMyTurn = gameState.currentTurn == _localPlayerColor;
-        
         return Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBar(
-            title: Text(isMyTurn ? 'Your Turn' : "Opponent's Turn"),
-            backgroundColor: isMyTurn ? AppColors.templeGold : AppColors.deepPurple,
-            foregroundColor: isMyTurn ? AppColors.deepPurple : Colors.white,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.exit_to_app),
-                onPressed: () => _showLeaveConfirmation(context),
-              ),
-            ],
-          ),
-          body: SafeArea(
-            child: Column(
-              children: [
-                // Opponent info (top)
-                _buildOpponentInfo(room, gameState),
-                
-                // Counting widget for opponent
-                CountingWidget(
-                  gameState: gameState,
-                  playerColor: _localPlayerColor == PlayerColor.white 
-                      ? PlayerColor.gold 
-                      : PlayerColor.white,
-                  onStartBoardCounting: null,
-                  onStartPieceCounting: null,
-                  onStopCounting: null,
-                  onDeclareDraw: null,
-                ),
-                
-                // Chess board
-                Expanded(
-                  child: Center(
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: Container(
-                        margin: const EdgeInsets.all(8),
-                        child: GameWidget(game: _game!),
-                      ),
-                    ),
-                  ),
-                ),
-                
-                // Local player info (bottom)
-                _buildLocalPlayerInfo(room, gameState),
-                
-                // Counting widget for local player
-                CountingWidget(
-                  gameState: gameState,
-                  playerColor: _localPlayerColor!,
-                  onStartBoardCounting: () => _startBoardCounting(_localPlayerColor!),
-                  onStartPieceCounting: () => _startPieceCounting(_localPlayerColor!),
-                  onStopCounting: _stopCounting,
-                  onDeclareDraw: _declareDraw,
-                ),
-              ],
-            ),
-          ),
+          appBar: _buildAppBar(),
+          body: SafeArea(child: _buildGameContent(blocState)),
         );
       },
     );
   }
 
-  Widget _buildOpponentInfo(OnlineGameRoom room, GameState gameState) {
-    final opponentColor = _localPlayerColor == PlayerColor.white 
-        ? PlayerColor.gold 
-        : PlayerColor.white;
+  Widget _buildLoadingScreen() {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(title: const Text('Online Game'), backgroundColor: AppColors.deepPurple),
+      body: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: AppColors.templeGold),
+            SizedBox(height: 16),
+            Text('Connecting...', style: TextStyle(color: AppColors.textSecondary)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // AppBar that rebuilds only when turn changes
+  PreferredSizeWidget _buildAppBar() {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(kToolbarHeight),
+      child: ValueListenableBuilder<bool>(
+        valueListenable: _isMyTurnNotifier,
+        builder: (context, isMyTurn, _) => AppBar(
+          title: Text(isMyTurn ? 'Your Turn' : "Opponent's Turn"),
+          backgroundColor: isMyTurn ? AppColors.templeGold : AppColors.deepPurple,
+          foregroundColor: isMyTurn ? AppColors.deepPurple : Colors.white,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.exit_to_app),
+              onPressed: () => _showLeaveConfirmation(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameContent(OnlineGameBlocState blocState) {
+    final room = blocState.currentRoom!;
+    
+    return Column(
+      children: [
+        // Opponent info - uses ValueListenableBuilder
+        _buildOpponentInfoCard(room),
+        
+        // Opponent counting widget
+        _buildCountingWidget(isOpponent: true),
+        
+        // Chess board - static, doesn't need rebuilding
+        Expanded(
+          child: Center(
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: RepaintBoundary(
+                child: Container(
+                  margin: const EdgeInsets.all(8),
+                  child: GameWidget(game: _game!),
+                ),
+              ),
+            ),
+          ),
+        ),
+        
+        // Local player info
+        _buildLocalPlayerInfoCard(room),
+        
+        // Local counting widget
+        _buildCountingWidget(isOpponent: false),
+      ],
+    );
+  }
+
+  Widget _buildOpponentInfoCard(OnlineGameRoom room) {
+    final opponentColor = _localPlayerColor == PlayerColor.white ? PlayerColor.gold : PlayerColor.white;
     final opponentName = _localPlayerColor == PlayerColor.white 
         ? (room.guestPlayerName ?? 'Opponent')
         : (room.hostPlayerName ?? 'Opponent');
     
-    return PlayerInfoCard(
-      name: opponentName,
-      color: opponentColor,
-      isCurrentTurn: gameState.currentTurn == opponentColor,
-      isInCheck: gameState.isCheck && gameState.currentTurn == opponentColor,
-      timeRemaining: opponentColor == PlayerColor.white 
-          ? gameState.whiteTimeRemaining 
-          : gameState.goldTimeRemaining,
-      capturedPieces: const [],
+    return ValueListenableBuilder<GameState?>(
+      valueListenable: _gameStateNotifier,
+      builder: (context, gameState, _) {
+        if (gameState == null) return const SizedBox.shrink();
+        return PlayerInfoCard(
+          name: opponentName,
+          color: opponentColor,
+          isCurrentTurn: gameState.currentTurn == opponentColor,
+          isInCheck: gameState.isCheck && gameState.currentTurn == opponentColor,
+          timeRemaining: opponentColor == PlayerColor.white 
+              ? gameState.whiteTimeRemaining 
+              : gameState.goldTimeRemaining,
+          capturedPieces: const [],
+        );
+      },
     );
   }
 
-  Widget _buildLocalPlayerInfo(OnlineGameRoom room, GameState gameState) {
+  Widget _buildLocalPlayerInfoCard(OnlineGameRoom room) {
     final localName = _localPlayerColor == PlayerColor.white 
         ? (room.hostPlayerName ?? 'You')
         : (room.guestPlayerName ?? 'You');
     
-    return PlayerInfoCard(
-      name: '$localName (You)',
-      color: _localPlayerColor!,
-      isCurrentTurn: gameState.currentTurn == _localPlayerColor,
-      isInCheck: gameState.isCheck && gameState.currentTurn == _localPlayerColor,
-      timeRemaining: _localPlayerColor == PlayerColor.white 
-          ? gameState.whiteTimeRemaining 
-          : gameState.goldTimeRemaining,
-      capturedPieces: const [],
+    return ValueListenableBuilder<GameState?>(
+      valueListenable: _gameStateNotifier,
+      builder: (context, gameState, _) {
+        if (gameState == null) return const SizedBox.shrink();
+        return PlayerInfoCard(
+          name: '$localName (You)',
+          color: _localPlayerColor!,
+          isCurrentTurn: gameState.currentTurn == _localPlayerColor,
+          isInCheck: gameState.isCheck && gameState.currentTurn == _localPlayerColor,
+          timeRemaining: _localPlayerColor == PlayerColor.white 
+              ? gameState.whiteTimeRemaining 
+              : gameState.goldTimeRemaining,
+          capturedPieces: const [],
+        );
+      },
+    );
+  }
+
+  Widget _buildCountingWidget({required bool isOpponent}) {
+    final playerColor = isOpponent
+        ? (_localPlayerColor == PlayerColor.white ? PlayerColor.gold : PlayerColor.white)
+        : _localPlayerColor!;
+    
+    return ValueListenableBuilder<GameState?>(
+      valueListenable: _gameStateNotifier,
+      builder: (context, gameState, _) {
+        if (gameState == null) return const SizedBox.shrink();
+        return CountingWidget(
+          gameState: gameState,
+          playerColor: playerColor,
+          onStartBoardCounting: isOpponent ? null : () => _startBoardCounting(playerColor),
+          onStartPieceCounting: isOpponent ? null : () => _startPieceCounting(playerColor),
+          onStopCounting: isOpponent ? null : _stopCounting,
+          onDeclareDraw: isOpponent ? null : _declareDraw,
+        );
+      },
     );
   }
 
@@ -458,15 +454,9 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         title: const Text('Leave Game?', style: TextStyle(color: AppColors.textPrimary)),
-        content: const Text(
-          'If you leave, you will forfeit the game.',
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
+        content: const Text('If you leave, you will forfeit.', style: TextStyle(color: AppColors.textSecondary)),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Stay'),
-          ),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Stay')),
           ElevatedButton(
             onPressed: () {
               Navigator.of(ctx).pop();
@@ -482,22 +472,22 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
   }
 
   void _startBoardCounting(PlayerColor escapingPlayer) {
-    final newState = _rules.startBoardHonorCounting(_currentGameState!, escapingPlayer);
+    final newState = _rules.startBoardHonorCounting(_gameStateNotifier.value!, escapingPlayer);
     _game!.updateGameState(newState);
   }
 
   void _startPieceCounting(PlayerColor escapingPlayer) {
-    final newState = _rules.startPieceHonorCounting(_currentGameState!, escapingPlayer);
+    final newState = _rules.startPieceHonorCounting(_gameStateNotifier.value!, escapingPlayer);
     _game!.updateGameState(newState);
   }
 
   void _stopCounting() {
-    final newState = _rules.stopCounting(_currentGameState!);
+    final newState = _rules.stopCounting(_gameStateNotifier.value!);
     _game!.updateGameState(newState);
   }
 
   void _declareDraw() {
-    final newState = _rules.declareDraw(_currentGameState!);
+    final newState = _rules.declareDraw(_gameStateNotifier.value!);
     _game!.updateGameState(newState);
   }
 }
@@ -532,7 +522,6 @@ class OnlineChessGame extends FlameGame {
     onGameStateChanged?.call(_gameState);
   }
 
-  /// Apply a move received from the remote opponent
   void applyRemoteMove(Move move) {
     _gameState = _rules.applyMove(_gameState, move);
     _board.animateMove(move);
@@ -558,7 +547,6 @@ class OnlineChessGame extends FlameGame {
     add(_board);
     _board.syncPieces(_gameState.board);
     
-    // Start timer
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!_gameState.isGameOver) {
         _gameState = _rules.tickTime(_gameState);
@@ -574,14 +562,12 @@ class OnlineChessGame extends FlameGame {
   }
 
   void _onSquareTapped(Position position) {
-    // Only allow moves when it's local player's turn
     if (_gameState.currentTurn != localPlayerColor) return;
     
     final piece = _gameState.board.getPiece(position);
 
     if (_selectedPosition != null) {
       final move = _validMoves.where((m) => m.to == position).firstOrNull;
-      
       if (move != null) {
         _executeMove(move);
         return;
@@ -620,7 +606,6 @@ class OnlineChessGame extends FlameGame {
     _board.animateMove(move);
     _board.setLastMove(move.from, move.to);
     
-    // Notify parent about the move
     onMoveMade?.call(move, newState);
     onGameStateChanged?.call(_gameState);
   }
