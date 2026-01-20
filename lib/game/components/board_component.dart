@@ -10,6 +10,7 @@ import 'square_highlight.dart';
 class BoardComponent extends PositionComponent with TapCallbacks {
   double _boardSize;
   final void Function(Position) onSquareTapped;
+  final bool flipBoard; // If true, flip board so Gold is at bottom
 
   final Map<Position, PieceComponent> _pieces = {};
   final List<SquareHighlight> _highlights = [];
@@ -21,6 +22,7 @@ class BoardComponent extends PositionComponent with TapCallbacks {
   BoardComponent({
     required double boardSize,
     required this.onSquareTapped,
+    this.flipBoard = false,
   }) : _boardSize = boardSize {
     size = Vector2.all(boardSize);
   }
@@ -59,9 +61,12 @@ class BoardComponent extends PositionComponent with TapCallbacks {
     for (var row = 0; row < 8; row++) {
       for (var col = 0; col < 8; col++) {
         final isLight = (row + col) % 2 == 0;
+        final pos = Position(row, col);
+        final screenPos = _positionToVector(pos);
+        
         final rect = Rect.fromLTWH(
-          col * squareSize,
-          (7 - row) * squareSize, // Flip row for display
+          screenPos.x,
+          screenPos.y,
           squareSize,
           squareSize,
         );
@@ -70,7 +75,6 @@ class BoardComponent extends PositionComponent with TapCallbacks {
         canvas.drawRect(rect, isLight ? lightPaint : darkPaint);
 
         // Last move highlight
-        final pos = Position(row, col);
         if (pos == _lastMoveFrom || pos == _lastMoveTo) {
           canvas.drawRect(rect, lastMovePaint);
         }
@@ -138,8 +142,14 @@ class BoardComponent extends PositionComponent with TapCallbacks {
   @override
   bool onTapDown(TapDownEvent event) {
     final localPos = event.localPosition;
-    final col = (localPos.x / squareSize).floor();
-    final row = 7 - (localPos.y / squareSize).floor(); // Flip for board coords
+    int col = (localPos.x / squareSize).floor();
+    int row = 7 - (localPos.y / squareSize).floor(); // Flip for board coords
+    
+    // If board is flipped, invert coordinates
+    if (flipBoard) {
+      col = 7 - col;
+      row = 7 - row;
+    }
 
     if (col >= 0 && col < 8 && row >= 0 && row < 8) {
       onSquareTapped(Position(row, col));
@@ -179,6 +189,13 @@ class BoardComponent extends PositionComponent with TapCallbacks {
   }
 
   Vector2 _positionToVector(Position pos) {
+    if (flipBoard) {
+      // Flip both row and column for Gold player
+      return Vector2(
+        (7 - pos.col) * squareSize,
+        pos.row * squareSize,
+      );
+    }
     return Vector2(
       pos.col * squareSize,
       (7 - pos.row) * squareSize,

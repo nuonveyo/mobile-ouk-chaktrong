@@ -535,6 +535,7 @@ class OnlineChessGame extends FlameGame {
     _board = BoardComponent(
       boardSize: size.x < size.y ? size.x : size.y,
       onSquareTapped: _onSquareTapped,
+      flipBoard: localPlayerColor == PlayerColor.gold, // Flip for Gold player
     );
     
     _board.position = Vector2(
