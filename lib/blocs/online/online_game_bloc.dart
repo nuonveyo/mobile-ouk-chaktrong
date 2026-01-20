@@ -29,6 +29,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     on<OnlineMoveExecuted>(_onMoveExecuted);
     on<OnlineGameEnded>(_onGameEnded);
     on<RefreshRoomsRequested>(_onRefreshRooms);
+    on<WatchRoomRequested>(_onWatchRoom);
     
     // Sign in and then start listening to rooms
     _initializeAndListen();
@@ -214,5 +215,31 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
   ) async {
     // Re-authenticate and listen
     await _initializeAndListen();
+  }
+
+  /// Watch a room that's already been joined (used by game screen)
+  Future<void> _onWatchRoom(
+    WatchRoomRequested event,
+    Emitter<OnlineGameBlocState> emit,
+  ) async {
+    emit(state.copyWith(isLoading: true, clearError: true));
+    
+    try {
+      // Ensure user is signed in
+      final user = await _authRepository.ensureSignedIn();
+      emit(state.copyWith(playerId: user.uid));
+      
+      // Start listening to the room - the room data will come from the stream
+      _startListeningToRoom(event.roomId);
+      
+      // Determine if we're the host based on the room data
+      // This will be updated when RoomUpdated event is received
+      emit(state.copyWith(isLoading: false));
+    } catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to connect: $e',
+      ));
+    }
   }
 }

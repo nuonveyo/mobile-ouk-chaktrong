@@ -58,8 +58,8 @@ class _LobbyScreenContent extends StatelessWidget {
           }
           
           // Navigate to game when it starts
-          if (state.isGameStarted) {
-            context.go('/game?mode=online');
+          if (state.isGameStarted && state.currentRoom != null) {
+            context.go('/online-game/${state.currentRoom!.id}');
           }
         },
         builder: (context, state) {

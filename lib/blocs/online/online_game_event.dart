@@ -78,3 +78,13 @@ class OnlineGameEnded extends OnlineGameEvent {
 class RefreshRoomsRequested extends OnlineGameEvent {
   const RefreshRoomsRequested();
 }
+
+/// Watch a room that's already been joined (for game screen)
+class WatchRoomRequested extends OnlineGameEvent {
+  final String roomId;
+  
+  const WatchRoomRequested(this.roomId);
+  
+  @override
+  List<Object?> get props => [roomId];
+}
