@@ -58,11 +58,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icons.person,
                 title: 'Username',
                 subtitle: _user?.name ?? 'Loading...',
+                onTap: () => _showEditProfileDialog(),
               ),
+              // _buildInfoTile(
+              //   icon: Icons.email_outlined,
+              //   title: 'Email',
+              //   subtitle: _user?.email ?? 'Not set',
+              //   onTap: () => _showEditProfileDialog(),
+              // ),
+              // _buildInfoTile(
+              //   icon: Icons.phone_outlined,
+              //   title: 'Phone',
+              //   subtitle: _user?.phoneNumber ?? 'Not set',
+              //   onTap: () => _showEditProfileDialog(),
+              // ),
               _buildInfoTile(
                 icon: Icons.emoji_events,
                 title: 'Total Points',
                 subtitle: '🏆 ${_user?.points ?? 0} pts',
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit, color: AppColors.templeGold),
+                title: const Text('Edit Profile', style: TextStyle(color: AppColors.templeGold)),
+                trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted),
+                onTap: () => _showEditProfileDialog(),
               ),
             ],
           ),
@@ -271,6 +290,104 @@ class _SettingsScreenState extends State<SettingsScreen> {
               rule,
               style: const TextStyle(color: AppColors.textSecondary),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditProfileDialog() {
+    final nameController = TextEditingController(text: _user?.name ?? '');
+    final emailController = TextEditingController(text: _user?.email ?? '');
+    final phoneController = TextEditingController(text: _user?.phoneNumber ?? '');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(color: AppColors.templeGold),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: const InputDecoration(
+                  labelText: 'Username',
+                  labelStyle: TextStyle(color: AppColors.textSecondary),
+                  prefixIcon: Icon(Icons.person, color: AppColors.templeGold),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.surfaceLight),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.templeGold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  labelStyle: TextStyle(color: AppColors.textSecondary),
+                  prefixIcon: Icon(Icons.email_outlined, color: AppColors.templeGold),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.surfaceLight),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.templeGold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number',
+                  labelStyle: TextStyle(color: AppColors.textSecondary),
+                  prefixIcon: Icon(Icons.phone_outlined, color: AppColors.templeGold),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.surfaceLight),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.templeGold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await _userRepository.updateProfile(
+                name: nameController.text.isNotEmpty ? nameController.text : null,
+                email: emailController.text.isNotEmpty ? emailController.text : null,
+                phoneNumber: phoneController.text.isNotEmpty ? phoneController.text : null,
+              );
+              
+              // Reload user data
+              final updatedUser = await _userRepository.getUser();
+              setState(() => _user = updatedUser);
+              
+              if (mounted) Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.templeGold,
+            ),
+            child: const Text('Save'),
           ),
         ],
       ),
