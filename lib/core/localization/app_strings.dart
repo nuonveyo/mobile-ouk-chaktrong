@@ -24,6 +24,12 @@ class AppStrings {
     _initialized = true;
   }
 
+  Future<String> getLanguage() async{
+    final prefs = await SharedPreferences.getInstance();
+    final langCode = prefs.getString('language') ?? 'en';
+    return langCode;
+  }
+
   /// Change language
   Future<void> setLanguage(String languageCode) async {
     _locale = Locale(languageCode);

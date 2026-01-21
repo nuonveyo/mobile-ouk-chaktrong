@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
@@ -6,6 +7,7 @@ import '../../services/sound_service.dart';
 import '../../services/vibration_service.dart';
 import '../../repositories/user_repository.dart';
 import '../../models/user.dart';
+import '../../app.dart';
 
 /// Settings screen with sound, vibration, and language options
 class SettingsScreen extends StatefulWidget {
@@ -258,6 +260,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ? const Icon(Icons.check_circle, color: AppColors.templeGold)
           : null,
       onTap: () async {
+        BlocProvider.of<OutChaktrongAppBloc>(context).updateLanguage(languageCode);
         setState(() => _selectedLanguage = languageCode);
         await appStrings.setLanguage(languageCode);
         if (_soundEnabled) {

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/game_constants.dart';
 import '../../core/localization/app_strings.dart';
+import '../../app.dart';
 
 /// Home screen with game mode selection
 class HomeScreen extends StatelessWidget {
@@ -10,62 +12,67 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.deepPurple,
-              Color(0xFF0D0518),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                const Spacer(flex: 1),
-                // Logo section
-                _buildLogo(),
-                const Spacer(flex: 1),
-                // Game mode buttons
-                _buildGameModeButton(
-                  context,
-                  icon: Icons.smart_toy_outlined,
-                  label: appStrings.playVsAi,
-                  sublabel: appStrings.challengeComputer,
-                  onTap: () => _showAiDifficultyDialog(context),
+    return BlocBuilder<OutChaktrongAppBloc, OutChaktrongAppState>(
+      buildWhen: (previous, current) => previous.local != current.local,
+      builder: (context, state) {
+        return Scaffold(
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.deepPurple,
+                  Color(0xFF0D0518),
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    const Spacer(flex: 1),
+                    // Logo section
+                    _buildLogo(),
+                    const Spacer(flex: 1),
+                    // Game mode buttons
+                    _buildGameModeButton(
+                      context,
+                      icon: Icons.smart_toy_outlined,
+                      label: appStrings.playVsAi,
+                      sublabel: appStrings.challengeComputer,
+                      onTap: () => _showAiDifficultyDialog(context),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildGameModeButton(
+                      context,
+                      icon: Icons.people_outline,
+                      label: appStrings.local2Players,
+                      sublabel: appStrings.playWithFriend,
+                      onTap: () => context.push('/game', extra: {
+                        'gameMode': GameMode.local2Player,
+                      }),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildGameModeButton(
+                      context,
+                      icon: Icons.public_outlined,
+                      label: appStrings.onlineMatch,
+                      sublabel: appStrings.playWorldwide,
+                      onTap: () => context.push('/lobby'),
+                    ),
+                    const Spacer(flex: 2),
+                    // Bottom navigation
+                    _buildBottomNav(context),
+                    const SizedBox(height: 16),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                _buildGameModeButton(
-                  context,
-                  icon: Icons.people_outline,
-                  label: appStrings.local2Players,
-                  sublabel: appStrings.playWithFriend,
-                  onTap: () => context.push('/game', extra: {
-                    'gameMode': GameMode.local2Player,
-                  }),
-                ),
-                const SizedBox(height: 16),
-                _buildGameModeButton(
-                  context,
-                  icon: Icons.public_outlined,
-                  label: appStrings.onlineMatch,
-                  sublabel: appStrings.playWorldwide,
-                  onTap: () => context.push('/lobby'),
-                ),
-                const Spacer(flex: 2),
-                // Bottom navigation
-                _buildBottomNav(context),
-                const SizedBox(height: 16),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
