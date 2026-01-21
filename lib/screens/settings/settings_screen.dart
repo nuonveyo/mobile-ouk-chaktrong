@@ -243,14 +243,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildRuleItem('ស្ដេច (King)', 'Moves 1 square in any direction'),
-              _buildRuleItem('នាង (Maiden)', 'Moves 1 square diagonally'),
-              _buildRuleItem('គោល (Elephant)', 'Moves 1 square diagonally'),
+              _buildRuleItem('នាង (Maiden)', 'Moves 1 square diagonally (4 directions)'),
+              _buildRuleItem('គោល (Elephant)', 'Moves 1 square diagonally (4 directions) or 1 square forward'),
               _buildRuleItem('សេះ (Horse)', 'Moves in an L-shape (can jump)'),
               _buildRuleItem('ទូក (Boat)', 'Moves any number of squares horizontally or vertically'),
               _buildRuleItem('ត្រី (Fish)', 'Moves 1 square forward, captures diagonally'),
               const Divider(color: AppColors.surfaceLight),
               const Text(
-                'Special: Fish promotes to Maiden when reaching rank 6',
+                'Special: Fish promotes to Maiden when reaching rank 5',
                 style: TextStyle(
                   color: AppColors.templeGold,
                   fontStyle: FontStyle.italic,
