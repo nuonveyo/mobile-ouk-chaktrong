@@ -61,12 +61,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           // Player Stats Section
           _buildSection(
-            'Player Stats',
+            appStrings.playerStats,
             [
               _buildInfoTile(
                 icon: Icons.person,
-                title: 'Username',
-                subtitle: _user?.name ?? 'Loading...',
+                title: appStrings.username,
+                subtitle: _user?.name ?? appStrings.loading,
                 onTap: () => _showEditProfileDialog(),
               ),
               // _buildInfoTile(
@@ -83,7 +83,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               // ),
               _buildInfoTile(
                 icon: Icons.emoji_events,
-                title: 'Total Points',
+                title: appStrings.totalPoints,
                 subtitle: '🏆 ${_user?.points ?? 0} pts',
               ),
               // ListTile(
@@ -128,7 +128,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   padding: const EdgeInsets.only(left: 40),
                   child: _buildSwitchTile(
                     icon: Icons.touch_app,
-                    title: 'Moving a piece',
+                    title: appStrings.movingPiece,
                     value: _vibrateMoveEnabled,
                     onChanged: (value) async {
                       setState(() => _vibrateMoveEnabled = value);
@@ -141,7 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   padding: const EdgeInsets.only(left: 40),
                   child: _buildSwitchTile(
                     icon: Icons.sports_mma,
-                    title: 'Capturing a piece',
+                    title: appStrings.capturingPiece,
                     value: _vibrateCaptureEnabled,
                     onChanged: (value) async {
                       setState(() => _vibrateCaptureEnabled = value);
@@ -154,7 +154,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   padding: const EdgeInsets.only(left: 40),
                   child: _buildSwitchTile(
                     icon: Icons.warning_amber,
-                    title: 'Check / Checkmate',
+                    title: appStrings.checkCheckmate,
                     value: _vibrateCheckEnabled,
                     onChanged: (value) async {
                       setState(() => _vibrateCheckEnabled = value);
@@ -297,16 +297,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildRuleItem('ស្ដេច (King)', 'Moves 1 square in any direction'),
-              _buildRuleItem('នាង (Maiden)', 'Moves 1 square diagonally (4 directions)'),
-              _buildRuleItem('គោល (Elephant)', 'Moves 1 square diagonally (4 directions) or 1 square forward'),
-              _buildRuleItem('សេះ (Horse)', 'Moves in an L-shape (can jump)'),
-              _buildRuleItem('ទូក (Boat)', 'Moves any number of squares horizontally or vertically'),
-              _buildRuleItem('ត្រី (Fish)', 'Moves 1 square forward, captures diagonally'),
+              _buildRuleItem('ស្ដេច (${appStrings.king})', appStrings.kingRule),
+              _buildRuleItem('នាង (${appStrings.maiden})', appStrings.maidenRule),
+              _buildRuleItem('គោល (${appStrings.elephant})', appStrings.elephantRule),
+              _buildRuleItem('សេះ (${appStrings.horse})', appStrings.horseRule),
+              _buildRuleItem('ទូក (${appStrings.boat})', appStrings.boatRule),
+              _buildRuleItem('ត្រី (${appStrings.fish})', appStrings.fishRule),
               const Divider(color: AppColors.surfaceLight),
-              const Text(
-                'Special: Fish promotes to Maiden when reaching rank 5',
-                style: TextStyle(
+              Text(
+                appStrings.fishPromotion,
+                style: const TextStyle(
                   color: AppColors.templeGold,
                   fontStyle: FontStyle.italic,
                 ),
@@ -317,7 +317,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: Text(appStrings.close),
           ),
         ],
       ),
@@ -360,9 +360,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(color: AppColors.templeGold),
+        title: Text(
+          appStrings.editProfile,
+          style: const TextStyle(color: AppColors.templeGold),
         ),
         content: SingleChildScrollView(
           child: Column(
@@ -371,9 +371,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               TextField(
                 controller: nameController,
                 style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                  labelText: 'Username',
-                  labelStyle: TextStyle(color: AppColors.textSecondary),
+                decoration: InputDecoration(
+                  labelText: appStrings.username,
+                  labelStyle: const TextStyle(color: AppColors.textSecondary),
                   prefixIcon: Icon(Icons.person, color: AppColors.templeGold),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: AppColors.surfaceLight),
@@ -423,7 +423,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(appStrings.cancel),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -442,7 +442,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.templeGold,
             ),
-            child: const Text('Save'),
+            child: Text(appStrings.save),
           ),
         ],
       ),

@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/game_constants.dart';
+import '../../core/localization/app_strings.dart';
 import '../../models/models.dart';
 import '../../models/online_game.dart';
 import '../../logic/game_rules.dart';
@@ -278,15 +279,15 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
         (gameState.result == GameResult.whiteWins && _localPlayerColor == PlayerColor.white) ||
         (gameState.result == GameResult.goldWins && _localPlayerColor == PlayerColor.gold);
     
-    String title = gameState.result == GameResult.draw ? 'Draw'
-        : isLocalWinner ? '🎉 You Win!' : 'Game Over';
-    String message = gameState.result == GameResult.draw ? 'The game ended in a draw.'
-        : isLocalWinner ? 'Congratulations!' : 'Your opponent wins.';
+    String title = gameState.result == GameResult.draw ? appStrings.drawResult
+        : isLocalWinner ? '🎉 ${appStrings.youWin}' : appStrings.gameOver;
+    String message = gameState.result == GameResult.draw ? appStrings.gameEndedInDraw
+        : isLocalWinner ? appStrings.congratulations : appStrings.opponentWins;
     
     // Award points for winning
     if (isLocalWinner) {
       final pointsAwarded = await UserRepository().awardWin();
-      message += '\n\n🏆 +$pointsAwarded points!';
+      message += '\n\n${appStrings.pointsAwarded(pointsAwarded)}';
     }
     
     if (!mounted) return;
@@ -305,7 +306,7 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
               context.go('/lobby'); // Navigate back to lobby using GoRouter
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.templeGold),
-            child: const Text('Back to Lobby'),
+            child: Text(appStrings.backToLobby),
           ),
         ],
       ),
@@ -479,10 +480,10 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Leave Game?', style: TextStyle(color: AppColors.textPrimary)),
-        content: const Text('If you leave, you will forfeit.', style: TextStyle(color: AppColors.textSecondary)),
+        title: Text(appStrings.leaveGame, style: const TextStyle(color: AppColors.textPrimary)),
+        content: Text(appStrings.ifYouLeaveForfeit, style: const TextStyle(color: AppColors.textSecondary)),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Stay')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(appStrings.stay)),
           ElevatedButton(
             onPressed: () {
               Navigator.of(ctx).pop(); // Close dialog
@@ -490,7 +491,7 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
               context.go('/lobby'); // Navigate back to lobby using GoRouter
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-            child: const Text('Leave'),
+            child: Text(appStrings.leave),
           ),
         ],
       ),

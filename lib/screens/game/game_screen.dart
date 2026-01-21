@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/game_constants.dart';
+import '../../core/localization/app_strings.dart';
 import '../../models/models.dart';
 import '../../logic/game_rules.dart';
 import '../../blocs/game/game_bloc.dart';
@@ -91,26 +92,26 @@ class _GameScreenContentState extends State<_GameScreenContent> {
     
     if (gameState.result == GameResult.draw) {
       if (gameState.counting.hasReachedLimit) {
-        title = 'Draw - Counting Limit Reached';
+        title = appStrings.drawCountingLimit;
         final typeLabel = gameState.counting.type == CountingType.boardHonor 
-            ? "Board's Honor" 
-            : "Piece's Honor";
-        message = '$typeLabel counting reached ${gameState.counting.limit} moves.\nThe game is a draw!';
+            ? appStrings.boardHonor 
+            : appStrings.pieceHonor;
+        message = appStrings.countingReachedLimit(typeLabel, gameState.counting.limit);
       } else if (gameState.counting.isActive) {
         // Draw due to counting player checkmating
-        title = 'Draw - Counting Rule';
-        message = 'The counting player achieved checkmate.\nBy the counting rules, this is a draw!';
+        title = appStrings.drawCountingRule;
+        message = appStrings.countingPlayerCheckmate;
       } else {
-        title = 'Draw';
-        message = 'The game ended in a draw.';
+        title = appStrings.drawResult;
+        message = appStrings.gameEndedInDraw;
       }
     } else if (gameState.result == GameResult.whiteWins) {
-      title = '🎉 Checkmate!';
-      message = 'White wins!\nCongratulations!';
+      title = '🎉 ${appStrings.checkmate}';
+      message = '${appStrings.whiteWins}\n${appStrings.congratulations}';
       isWin = true;
     } else if (gameState.result == GameResult.goldWins) {
-      title = '🎉 Checkmate!';
-      message = 'Gold wins!\nCongratulations!';
+      title = '🎉 ${appStrings.checkmate}';
+      message = '${appStrings.goldWins}\n${appStrings.congratulations}';
       isWin = true;
     } else {
       return; // Game not over
@@ -119,7 +120,7 @@ class _GameScreenContentState extends State<_GameScreenContent> {
     // Award points for winning
     if (isWin) {
       pointsAwarded = await UserRepository().awardWin();
-      message += '\n\n🏆 +$pointsAwarded points!';
+      message += '\n\n${appStrings.pointsAwarded(pointsAwarded)}';
     }
     
     if (!context.mounted) return;
@@ -143,7 +144,7 @@ class _GameScreenContentState extends State<_GameScreenContent> {
               Navigator.of(context).pop(); // Close dialog
               context.go('/'); // Go back to home using GoRouter
             },
-            child: const Text('Back to Home'),
+            child: Text(appStrings.backToHome),
           ),
           ElevatedButton(
             onPressed: () {
@@ -155,7 +156,7 @@ class _GameScreenContentState extends State<_GameScreenContent> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.templeGold,
             ),
-            child: const Text('Play Again'),
+            child: Text(appStrings.playAgain),
           ),
         ],
       ),
