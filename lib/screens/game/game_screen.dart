@@ -1,6 +1,7 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/game_constants.dart';
 import '../../models/models.dart';
@@ -139,8 +140,8 @@ class _GameScreenContentState extends State<_GameScreenContent> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop(); // Go back to home
+              Navigator.of(context).pop(); // Close dialog
+              context.go('/'); // Go back to home using GoRouter
             },
             child: const Text('Back to Home'),
           ),
