@@ -38,16 +38,25 @@ class AppStrings {
 
   // Home screen
   String get playVsAi => _get('Play vs AI', 'លេងជាមួយ AI');
+  String get challengeComputer => _get('Challenge the computer', 'ប្រកួតជាមួយកុំព្យូទ័រ');
   String get local2Players => _get('Local 2 Players', 'លេង ២ នាក់');
+  String get playWithFriend => _get('Play with a friend', 'លេងជាមួយមិត្តភក្តិ');
   String get onlineMatch => _get('Online Match', 'លេង Online');
+  String get playWorldwide => _get('Play worldwide', 'លេងទូទាំងពិភពលោក');
   String get settings => _get('Settings', 'ការកំណត់');
   String get testScenarios => _get('Test Scenarios', 'សាកល្បង');
+  String get home => _get('Home', 'ដើម');
+  String get ranks => _get('Ranks', 'ចំណាត់ថ្នាក់');
+  String get test => _get('Test', 'សាកល្បង');
 
   // AI Difficulty
   String get selectDifficulty => _get('Select Difficulty', 'ជ្រើសរើសកម្រិត');
   String get easy => _get('Easy', 'ងាយស្រួល');
+  String get perfectForBeginners => _get('Perfect for beginners', 'ល្អសម្រាប់អ្នកចាប់ផ្តើម');
   String get medium => _get('Medium', 'មធ្យម');
+  String get balancedChallenge => _get('A balanced challenge', 'ការប្រកួតមានតុល្យភាព');
   String get hard => _get('Hard', 'លំបាក');
+  String get forExperienced => _get('For experienced players', 'សម្រាប់អ្នកលេងមានបទពិសោធន៍');
 
   // Game screen
   String get yourTurn => _get('Your turn', 'វេនអ្នក');
@@ -129,12 +138,18 @@ class AppStrings {
   String get onlineLobby => _get('Online Lobby', 'បន្ទប់ Online');
   String get onlineGame => _get('Online Game', 'ល្បែង Online');
   String get createRoom => _get('Create Room', 'បង្កើតបន្ទប់');
+  String get createGameRoom => _get('Create Game Room', 'បង្កើតបន្ទប់ល្បែង');
+  String get create => _get('Create', 'បង្កើត');
   String get availableRooms => _get('Available Rooms', 'បន្ទប់ទំនេរ');
   String get noRoomsAvailable => _get('No rooms available', 'គ្មានបន្ទប់ទេ');
   String get createRoomToStart => _get('Create a room to start playing!', 'បង្កើតបន្ទប់ដើម្បីចាប់ផ្តើមលេង!');
   String get waitingForOpponent => _get('Waiting for opponent...', 'រង់ចាំគូប្រកួត...');
   String get join => _get('Join', 'ចូល');
   String get timeControl => _get('Time Control', 'ពេលវេលា');
+  String get player => _get('Player', 'អ្នកលេង');
+  String get room => _get('Room', 'បន្ទប់');
+  String minFormat(int min) => _get('$min min', '$min នាទី');
+  String get waitingOpponentShort => _get('Waiting for opponent', 'រង់ចាំគូប្រកួត');
 
   // Pieces (for accessibility and rules)
   String get king => _get('King', 'ស្ដេច');

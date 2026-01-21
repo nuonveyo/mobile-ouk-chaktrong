@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/game_constants.dart';
+import '../../core/localization/app_strings.dart';
 
 /// Home screen with game mode selection
 class HomeScreen extends StatelessWidget {
@@ -34,16 +35,16 @@ class HomeScreen extends StatelessWidget {
                 _buildGameModeButton(
                   context,
                   icon: Icons.smart_toy_outlined,
-                  label: 'Play vs AI',
-                  sublabel: 'Challenge the computer',
+                  label: appStrings.playVsAi,
+                  sublabel: appStrings.challengeComputer,
                   onTap: () => _showAiDifficultyDialog(context),
                 ),
                 const SizedBox(height: 16),
                 _buildGameModeButton(
                   context,
                   icon: Icons.people_outline,
-                  label: 'Local 2 Players',
-                  sublabel: 'Play with a friend',
+                  label: appStrings.local2Players,
+                  sublabel: appStrings.playWithFriend,
                   onTap: () => context.push('/game', extra: {
                     'gameMode': GameMode.local2Player,
                   }),
@@ -52,8 +53,8 @@ class HomeScreen extends StatelessWidget {
                 _buildGameModeButton(
                   context,
                   icon: Icons.public_outlined,
-                  label: 'Online Match',
-                  sublabel: 'Play worldwide',
+                  label: appStrings.onlineMatch,
+                  sublabel: appStrings.playWorldwide,
                   onTap: () => context.push('/lobby'),
                 ),
                 const Spacer(flex: 2),
@@ -213,17 +214,17 @@ class HomeScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildNavItem(Icons.home_filled, 'Home', true),
-        _buildNavItem(Icons.leaderboard_outlined, 'Ranks', false),
+        _buildNavItem(Icons.home_filled, appStrings.home, true),
+        _buildNavItem(Icons.leaderboard_outlined, appStrings.ranks, false),
         _buildNavItem(
           Icons.bug_report_outlined,
-          'Test',
+          appStrings.test,
           false,
           onTap: () => context.push('/test'),
         ),
         _buildNavItem(
           Icons.settings_outlined,
-          'Settings',
+          appStrings.settings,
           false,
           onTap: () => context.push('/settings'),
         ),
@@ -274,9 +275,9 @@ class HomeScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Select Difficulty',
-              style: TextStyle(
+            Text(
+              appStrings.selectDifficulty,
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
@@ -285,24 +286,24 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 20),
             _buildDifficultyOption(
               context,
-              'Easy',
-              'Perfect for beginners',
+              appStrings.easy,
+              appStrings.perfectForBeginners,
               AiDifficulty.easy,
               Colors.green,
             ),
             const SizedBox(height: 12),
             _buildDifficultyOption(
               context,
-              'Medium',
-              'A balanced challenge',
+              appStrings.medium,
+              appStrings.balancedChallenge,
               AiDifficulty.medium,
               Colors.orange,
             ),
             const SizedBox(height: 12),
             _buildDifficultyOption(
               context,
-              'Hard',
-              'For experienced players',
+              appStrings.hard,
+              appStrings.forExperienced,
               AiDifficulty.hard,
               Colors.red,
             ),

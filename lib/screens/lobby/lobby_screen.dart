@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/game_constants.dart';
+import '../../core/localization/app_strings.dart';
 import '../../models/models.dart';
 import '../../blocs/online/online_game_bloc.dart';
 import '../../repositories/repositories.dart';
@@ -31,7 +32,7 @@ class _LobbyScreenContent extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Online Lobby'),
+        title: Text(appStrings.onlineLobby),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -102,12 +103,12 @@ class _LobbyScreenContent extends StatelessWidget {
       builder: (dialogContext) => StatefulBuilder(
         builder: (builderContext, setState) => AlertDialog(
           backgroundColor: AppColors.surface,
-          title: const Text('Create Game Room'),
+          title: Text(appStrings.createGameRoom),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Time Control:'),
+              Text('${appStrings.timeControl}:'),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -134,14 +135,14 @@ class _LobbyScreenContent extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
+              child: Text(appStrings.cancel),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
                 bloc.add(CreateRoomRequested(timeControl: selectedTime));
               },
-              child: const Text('Create'),
+              child: Text(appStrings.create),
             ),
           ],
         ),
@@ -207,7 +208,7 @@ class _RoomList extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: onCreateRoom,
               icon: const Icon(Icons.add),
-              label: const Text('Create Room'),
+              label: Text(appStrings.createRoom),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
@@ -225,7 +226,7 @@ class _RoomList extends StatelessWidget {
               const Icon(Icons.groups, color: AppColors.templeGold, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Available Rooms (${rooms.length})',
+                '${appStrings.availableRooms} (${rooms.length})',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -239,27 +240,27 @@ class _RoomList extends StatelessWidget {
         // Room list
         Expanded(
           child: rooms.isEmpty
-              ? const Center(
+              ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.hourglass_empty,
                         size: 48,
                         color: AppColors.textMuted,
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Text(
-                        'No rooms available',
-                        style: TextStyle(
+                        appStrings.noRoomsAvailable,
+                        style: const TextStyle(
                           color: AppColors.textMuted,
                           fontSize: 16,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
-                        'Create a room to start playing!',
-                        style: TextStyle(
+                        appStrings.createRoomToStart,
+                        style: const TextStyle(
                           color: AppColors.textMuted,
                           fontSize: 14,
                         ),
@@ -315,19 +316,19 @@ class _RoomCard extends StatelessWidget {
           ),
         ),
         title: Text(
-          room.hostPlayerName ?? 'Player',
+          room.hostPlayerName ?? appStrings.player,
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
           ),
         ),
         subtitle: Text(
-          '$minutes min • Waiting for opponent',
+          '${appStrings.minFormat(minutes)} • ${appStrings.waitingOpponentShort}',
           style: const TextStyle(color: AppColors.textMuted),
         ),
         trailing: ElevatedButton(
           onPressed: onJoin,
-          child: const Text('Join'),
+          child: Text(appStrings.join),
         ),
       ),
     );
@@ -353,9 +354,9 @@ class _WaitingForOpponent extends StatelessWidget {
           children: [
             const CircularProgressIndicator(color: AppColors.templeGold),
             const SizedBox(height: 32),
-            const Text(
-              'Waiting for opponent...',
-              style: TextStyle(
+            Text(
+              appStrings.waitingForOpponent,
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
@@ -369,7 +370,7 @@ class _WaitingForOpponent extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'Room: ${roomId.substring(0, 8)}...',
+                '${appStrings.room}: ${roomId.substring(0, 8)}...',
                 style: const TextStyle(
                   fontFamily: 'monospace',
                   color: AppColors.textSecondary,
@@ -379,7 +380,7 @@ class _WaitingForOpponent extends StatelessWidget {
             const SizedBox(height: 32),
             OutlinedButton(
               onPressed: onCancel,
-              child: const Text('Cancel'),
+              child: Text(appStrings.cancel),
             ),
           ],
         ),
