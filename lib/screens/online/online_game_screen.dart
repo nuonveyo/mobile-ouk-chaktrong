@@ -3,6 +3,7 @@ import 'package:flame/game.dart';
 import 'package:flame/components.dart' hide Timer;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/game_constants.dart';
 import '../../models/models.dart';
@@ -300,8 +301,8 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
         actions: [
           ElevatedButton(
             onPressed: () {
-              Navigator.of(ctx).pop();
-              Navigator.of(context).pop();
+              Navigator.of(ctx).pop(); // Close dialog
+              context.go('/lobby'); // Navigate back to lobby using GoRouter
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.templeGold),
             child: const Text('Back to Lobby'),
@@ -484,9 +485,9 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
           TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Stay')),
           ElevatedButton(
             onPressed: () {
-              Navigator.of(ctx).pop();
+              Navigator.of(ctx).pop(); // Close dialog
               context.read<OnlineGameBloc>().add(const LeaveRoomRequested());
-              Navigator.of(context).pop();
+              context.go('/lobby'); // Navigate back to lobby using GoRouter
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             child: const Text('Leave'),
