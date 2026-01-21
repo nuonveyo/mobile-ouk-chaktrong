@@ -18,6 +18,9 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _soundEnabled = true;
   bool _vibrationEnabled = true;
+  bool _vibrateMoveEnabled = true;
+  bool _vibrateCaptureEnabled = true;
+  bool _vibrateCheckEnabled = true;
   String _selectedLanguage = 'en';
   User? _user;
   final UserRepository _userRepository = UserRepository();
@@ -38,6 +41,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _soundEnabled = SoundService().soundEnabled;
       _vibrationEnabled = VibrationService().vibrationEnabled;
+      _vibrateMoveEnabled = VibrationService().vibrateMoveEnabled;
+      _vibrateCaptureEnabled = VibrationService().vibrateCaptureEnabled;
+      _vibrateCheckEnabled = VibrationService().vibrateCheckEnabled;
       _selectedLanguage = appStrings.locale.languageCode;
       _user = user;
     });
@@ -116,6 +122,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }
                 },
               ),
+              // Advanced vibration options (only show if vibration is enabled)
+              if (_vibrationEnabled) ...[
+                Padding(
+                  padding: const EdgeInsets.only(left: 40),
+                  child: _buildSwitchTile(
+                    icon: Icons.touch_app,
+                    title: 'Moving a piece',
+                    value: _vibrateMoveEnabled,
+                    onChanged: (value) async {
+                      setState(() => _vibrateMoveEnabled = value);
+                      await VibrationService().setVibrateMoveEnabled(value);
+                      if (value) VibrationService().vibrateMove();
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 40),
+                  child: _buildSwitchTile(
+                    icon: Icons.sports_mma,
+                    title: 'Capturing a piece',
+                    value: _vibrateCaptureEnabled,
+                    onChanged: (value) async {
+                      setState(() => _vibrateCaptureEnabled = value);
+                      await VibrationService().setVibrateCaptureEnabled(value);
+                      if (value) VibrationService().vibrateCapture();
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 40),
+                  child: _buildSwitchTile(
+                    icon: Icons.warning_amber,
+                    title: 'Check / Checkmate',
+                    value: _vibrateCheckEnabled,
+                    onChanged: (value) async {
+                      setState(() => _vibrateCheckEnabled = value);
+                      await VibrationService().setVibrateCheckEnabled(value);
+                      if (value) VibrationService().vibrateCheck();
+                    },
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 16),
