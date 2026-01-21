@@ -6,6 +6,7 @@ import '../models/models.dart';
 import '../logic/logic.dart';
 import '../core/constants/constants.dart';
 import '../services/sound_service.dart';
+import '../services/vibration_service.dart';
 import 'components/board_component.dart';
 import 'components/piece_component.dart';
 import 'components/square_highlight.dart';
@@ -168,19 +169,22 @@ class ChessGame extends FlameGame {
 
   /// Execute a move
   void _executeMove(Move move) {
-    // Play appropriate sound
+    // Play appropriate sound and vibration
     if (move.isCapture) {
       SoundService().playCapture();
+      VibrationService().vibrateCapture();
     } else {
       SoundService().playMove();
+      VibrationService().vibrateMove();
     }
 
     // Apply move to game state
     _gameState = _rules.applyMove(_gameState, move);
 
-    // Play check sound if in check
+    // Play check sound/vibration if in check
     if (_gameState.isCheck) {
       SoundService().playCheck();
+      VibrationService().vibrateCheck();
     }
 
     // Clear selection

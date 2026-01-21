@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_strings.dart';
 import '../../services/sound_service.dart';
+import '../../services/vibration_service.dart';
 import '../../repositories/user_repository.dart';
 import '../../models/user.dart';
 
@@ -30,11 +31,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadSettings() async {
     await appStrings.init();
     await SoundService().init();
+    await VibrationService().init();
     
     final user = await _userRepository.getUser();
     
     setState(() {
       _soundEnabled = SoundService().soundEnabled;
+      _vibrationEnabled = VibrationService().vibrationEnabled;
       _selectedLanguage = appStrings.locale.languageCode;
       _user = user;
     });
@@ -105,8 +108,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icons.vibration,
                 title: appStrings.vibration,
                 value: _vibrationEnabled,
-                onChanged: (value) {
+                onChanged: (value) async {
                   setState(() => _vibrationEnabled = value);
+                  await VibrationService().setVibrationEnabled(value);
+                  if (value) {
+                    VibrationService().vibrateButton();
+                  }
                 },
               ),
             ],
