@@ -77,12 +77,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: 'Total Points',
                 subtitle: '🏆 ${_user?.points ?? 0} pts',
               ),
-              ListTile(
-                leading: const Icon(Icons.edit, color: AppColors.templeGold),
-                title: const Text('Edit Profile', style: TextStyle(color: AppColors.templeGold)),
-                trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted),
-                onTap: () => _showEditProfileDialog(),
-              ),
+              // ListTile(
+              //   leading: const Icon(Icons.edit, color: AppColors.templeGold),
+              //   title: const Text('Edit Profile', style: TextStyle(color: AppColors.templeGold)),
+              //   trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted),
+              //   onTap: () => _showEditProfileDialog(),
+              // ),
             ],
           ),
           const SizedBox(height: 16),
@@ -328,40 +328,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  labelStyle: TextStyle(color: AppColors.textSecondary),
-                  prefixIcon: Icon(Icons.email_outlined, color: AppColors.templeGold),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: AppColors.surfaceLight),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: AppColors.templeGold),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: phoneController,
-                keyboardType: TextInputType.phone,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
-                  labelStyle: TextStyle(color: AppColors.textSecondary),
-                  prefixIcon: Icon(Icons.phone_outlined, color: AppColors.templeGold),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: AppColors.surfaceLight),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: AppColors.templeGold),
-                  ),
-                ),
-              ),
+              // const SizedBox(height: 16),
+              // TextField(
+              //   controller: emailController,
+              //   keyboardType: TextInputType.emailAddress,
+              //   style: const TextStyle(color: AppColors.textPrimary),
+              //   decoration: const InputDecoration(
+              //     labelText: 'Email',
+              //     labelStyle: TextStyle(color: AppColors.textSecondary),
+              //     prefixIcon: Icon(Icons.email_outlined, color: AppColors.templeGold),
+              //     enabledBorder: UnderlineInputBorder(
+              //       borderSide: BorderSide(color: AppColors.surfaceLight),
+              //     ),
+              //     focusedBorder: UnderlineInputBorder(
+              //       borderSide: BorderSide(color: AppColors.templeGold),
+              //     ),
+              //   ),
+              // ),
+              // const SizedBox(height: 16),
+              // TextField(
+              //   controller: phoneController,
+              //   keyboardType: TextInputType.phone,
+              //   style: const TextStyle(color: AppColors.textPrimary),
+              //   decoration: const InputDecoration(
+              //     labelText: 'Phone Number',
+              //     labelStyle: TextStyle(color: AppColors.textSecondary),
+              //     prefixIcon: Icon(Icons.phone_outlined, color: AppColors.templeGold),
+              //     enabledBorder: UnderlineInputBorder(
+              //       borderSide: BorderSide(color: AppColors.surfaceLight),
+              //     ),
+              //     focusedBorder: UnderlineInputBorder(
+              //       borderSide: BorderSide(color: AppColors.templeGold),
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ),
