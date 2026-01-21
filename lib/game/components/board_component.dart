@@ -18,6 +18,7 @@ class BoardComponent extends PositionComponent with TapCallbacks {
   Position? _selectedSquare;
   Position? _lastMoveFrom;
   Position? _lastMoveTo;
+  Position? _checkPosition; // Position of King in check
 
   BoardComponent({
     required double boardSize,
@@ -74,9 +75,15 @@ class BoardComponent extends PositionComponent with TapCallbacks {
         // Base square color
         canvas.drawRect(rect, isLight ? lightPaint : darkPaint);
 
-        // Last move highlight
+        // Last move highlight (light gold)
         if (pos == _lastMoveFrom || pos == _lastMoveTo) {
           canvas.drawRect(rect, lastMovePaint);
+        }
+
+        // Check highlight (light red on King in check)
+        if (pos == _checkPosition) {
+          final checkPaint = Paint()..color = AppColors.checkHighlight;
+          canvas.drawRect(rect, checkPaint);
         }
 
         // Selected square highlight
@@ -211,6 +218,11 @@ class BoardComponent extends PositionComponent with TapCallbacks {
   void setLastMove(Position from, Position to) {
     _lastMoveFrom = from;
     _lastMoveTo = to;
+  }
+
+  /// Set check highlight on King position (null to clear)
+  void setCheckPosition(Position? position) {
+    _checkPosition = position;
   }
 
   /// Set valid move highlights

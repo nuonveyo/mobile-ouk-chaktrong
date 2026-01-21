@@ -22,8 +22,8 @@ class AppColors {
   // Highlights
   static const Color selectedSquare = Color(0x80FFD700);
   static const Color validMove = Color(0x664ADE80);
-  static const Color lastMove = Color(0x6693729B);
-  static const Color checkHighlight = Color(0x80EF4444);
+  static const Color lastMove = Color(0x66D4AF37); // Light gold for previous move
+  static const Color checkHighlight = Color(0x99EF4444); // Light red for king in check
 
   // Semantic Colors
   static const Color success = Color(0xFF4ADE80);

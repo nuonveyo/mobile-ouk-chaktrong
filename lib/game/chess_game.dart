@@ -196,6 +196,14 @@ class ChessGame extends FlameGame {
     // Highlight last move
     _board.setLastMove(move.from, move.to);
 
+    // Highlight King if in check
+    if (_gameState.isCheck) {
+      final kingPos = _gameState.board.findKing(_gameState.currentTurn);
+      _board.setCheckPosition(kingPos);
+    } else {
+      _board.setCheckPosition(null);
+    }
+
     // Notify listeners
     onGameStateChanged?.call(_gameState);
 
