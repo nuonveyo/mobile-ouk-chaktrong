@@ -15,6 +15,8 @@ import '../../blocs/online/online_game_bloc.dart';
 import '../../repositories/repositories.dart';
 import '../../widgets/player_info_card.dart';
 import '../../widgets/counting_widget.dart';
+import '../../widgets/reaction_picker.dart';
+import '../../widgets/reaction_display.dart';
 import '../../game/components/board_component.dart';
 
 /// Screen for online multiplayer game
@@ -56,9 +58,11 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
   // Use ValueNotifier for granular UI updates
   final ValueNotifier<GameState?> _gameStateNotifier = ValueNotifier(null);
   final ValueNotifier<bool> _isMyTurnNotifier = ValueNotifier(false);
+  final ValueNotifier<int?> _reactionNotifier = ValueNotifier(null);
   
   // Store room data without triggering widget rebuilds
   OnlineGameRoom? _room;
+  int? _lastReactionTimestamp; // To prevent showing same reaction twice
   
   String? _localPlayerId;
   PlayerColor? _localPlayerColor;
@@ -76,6 +80,7 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
     _roomSubscription?.cancel();
     _gameStateNotifier.dispose();
     _isMyTurnNotifier.dispose();
+    _reactionNotifier.dispose();
     super.dispose();
   }
 
@@ -199,6 +204,17 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
             for (int i = expectedMoves; i < gameData.moves.length; i++) {
               _applyRemoteMove(gameData.moves[i]);
             }
+          }
+        }
+        
+        // Handle incoming reactions from opponent
+        if (room.latestReactionCode != null && 
+            room.latestReactionSender != null &&
+            room.latestReactionSender != _localPlayerId) {
+          final reactionKey = room.latestReactionCode.hashCode ^ room.latestReactionSender.hashCode;
+          if (_lastReactionTimestamp != reactionKey) {
+            _lastReactionTimestamp = reactionKey;
+            _reactionNotifier.value = room.latestReactionCode;
           }
         }
         
@@ -375,35 +391,78 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
   }
 
   Widget _buildGameContent() {
-    return Column(
+    return Stack(
       children: [
-        // Opponent info - uses ValueListenableBuilder
-        _buildOpponentInfoCard(_room!),
-        
-        // Opponent counting widget
-        _buildCountingWidget(isOpponent: true),
-        
-        // Chess board - static, doesn't need rebuilding
-        Expanded(
-          child: Center(
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: RepaintBoundary(
-                child: Container(
-                  margin: const EdgeInsets.all(8),
-                  child: GameWidget(game: _game!),
+        Column(
+          children: [
+            // Opponent info with reaction button
+            _buildOpponentInfoCard(_room!),
+            
+            // Opponent counting widget
+            _buildCountingWidget(isOpponent: true),
+            
+            // Chess board - static, doesn't need rebuilding
+            Expanded(
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: RepaintBoundary(
+                    child: Container(
+                      margin: const EdgeInsets.all(8),
+                      child: GameWidget(game: _game!),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+            
+            // Local player info with reaction button
+            _buildLocalPlayerInfoCard(_room!),
+            
+            // Local counting widget
+            _buildCountingWidget(isOpponent: false),
+          ],
         ),
         
-        // Local player info
-        _buildLocalPlayerInfoCard(_room!),
-        
-        // Local counting widget
-        _buildCountingWidget(isOpponent: false),
+        // Reaction display overlay
+        _buildReactionOverlay(),
       ],
+    );
+  }
+
+  Widget _buildReactionOverlay() {
+    return ValueListenableBuilder<int?>(
+      valueListenable: _reactionNotifier,
+      builder: (context, reactionCode, _) {
+        if (reactionCode == null) return const SizedBox.shrink();
+        
+        // Position below opponent's profile (top of screen)
+        // since reactions come from opponent
+        return Positioned(
+          top: 100, // Below opponent's player info card
+          left: 0,
+          right: 0,
+          child: Center(
+            child: ReactionDisplay(
+              reactionCode: reactionCode,
+              isFromOpponent: true,
+              onDismissed: () {
+                _reactionNotifier.value = null;
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _sendReaction(int reactionCode) {
+    if (_localPlayerId == null) return;
+    
+    _repository?.sendReaction(
+      roomId: widget.roomId,
+      reactionCode: reactionCode,
+      senderId: _localPlayerId!,
     );
   }
 
@@ -436,21 +495,39 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
         ? (room.hostPlayerName ?? 'You')
         : (room.guestPlayerName ?? 'You');
     
-    return ValueListenableBuilder<GameState?>(
-      valueListenable: _gameStateNotifier,
-      builder: (context, gameState, _) {
-        if (gameState == null) return const SizedBox.shrink();
-        return PlayerInfoCard(
-          name: '$localName (You)',
-          color: _localPlayerColor!,
-          isCurrentTurn: gameState.currentTurn == _localPlayerColor,
-          isInCheck: gameState.isCheck && gameState.currentTurn == _localPlayerColor,
-          timeRemaining: _localPlayerColor == PlayerColor.white 
-              ? gameState.whiteTimeRemaining 
-              : gameState.goldTimeRemaining,
-          capturedPieces: const [],
-        );
-      },
+    return Row(
+      children: [
+        // Reaction button
+        IconButton(
+          onPressed: () => ReactionPicker.show(
+            context,
+            onReactionSelected: _sendReaction,
+          ),
+          icon: const Icon(Icons.emoji_emotions_outlined),
+          color: AppColors.templeGold,
+          tooltip: 'Send Reaction',
+        ),
+        
+        // Player info card
+        Expanded(
+          child: ValueListenableBuilder<GameState?>(
+            valueListenable: _gameStateNotifier,
+            builder: (context, gameState, _) {
+              if (gameState == null) return const SizedBox.shrink();
+              return PlayerInfoCard(
+                name: '$localName (You)',
+                color: _localPlayerColor!,
+                isCurrentTurn: gameState.currentTurn == _localPlayerColor,
+                isInCheck: gameState.isCheck && gameState.currentTurn == _localPlayerColor,
+                timeRemaining: _localPlayerColor == PlayerColor.white 
+                    ? gameState.whiteTimeRemaining 
+                    : gameState.goldTimeRemaining,
+                capturedPieces: const [],
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

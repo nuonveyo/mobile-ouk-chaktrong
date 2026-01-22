@@ -125,6 +125,18 @@ class OnlineGameRepository {
     });
   }
 
+  /// Send a reaction to the opponent
+  Future<void> sendReaction({
+    required String roomId,
+    required int reactionCode, // 1-7
+    required String senderId,
+  }) async {
+    await _gamesRef.doc(roomId).update({
+      'latestReactionCode': reactionCode,
+      'latestReactionSender': senderId,
+    });
+  }
+
   /// Leave/cancel a game room
   Future<void> leaveRoom(String roomId) async {
     final docRef = _gamesRef.doc(roomId);

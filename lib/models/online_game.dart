@@ -14,6 +14,8 @@ class OnlineGameRoom extends Equatable {
   final DateTime createdAt;
   final DateTime? startedAt;
   final OnlineGameData? gameData;
+  final int? latestReactionCode;      // 1-7 for reactions
+  final String? latestReactionSender; // player ID who sent reaction
 
   const OnlineGameRoom({
     required this.id,
@@ -26,6 +28,8 @@ class OnlineGameRoom extends Equatable {
     required this.createdAt,
     this.startedAt,
     this.gameData,
+    this.latestReactionCode,
+    this.latestReactionSender,
   });
 
   bool get isFull => hostPlayerId != null && guestPlayerId != null;
@@ -52,6 +56,8 @@ class OnlineGameRoom extends Equatable {
       gameData: json['gameData'] != null 
           ? OnlineGameData.fromJson(json['gameData'] as Map<String, dynamic>)
           : null,
+      latestReactionCode: json['latestReactionCode'] as int?,
+      latestReactionSender: json['latestReactionSender'] as String?,
     );
   }
 
@@ -66,6 +72,8 @@ class OnlineGameRoom extends Equatable {
       'createdAt': createdAt.toIso8601String(),
       'startedAt': startedAt?.toIso8601String(),
       'gameData': gameData?.toJson(),
+      'latestReactionCode': latestReactionCode,
+      'latestReactionSender': latestReactionSender,
     };
   }
 
@@ -80,6 +88,8 @@ class OnlineGameRoom extends Equatable {
     DateTime? createdAt,
     DateTime? startedAt,
     OnlineGameData? gameData,
+    int? latestReactionCode,
+    String? latestReactionSender,
   }) {
     return OnlineGameRoom(
       id: id ?? this.id,
@@ -92,6 +102,8 @@ class OnlineGameRoom extends Equatable {
       createdAt: createdAt ?? this.createdAt,
       startedAt: startedAt ?? this.startedAt,
       gameData: gameData ?? this.gameData,
+      latestReactionCode: latestReactionCode ?? this.latestReactionCode,
+      latestReactionSender: latestReactionSender ?? this.latestReactionSender,
     );
   }
 
@@ -99,6 +111,7 @@ class OnlineGameRoom extends Equatable {
   List<Object?> get props => [
         id, hostPlayerId, guestPlayerId, hostPlayerName, guestPlayerName,
         status, timeControl, createdAt, startedAt, gameData,
+        latestReactionCode, latestReactionSender,
       ];
 }
 
