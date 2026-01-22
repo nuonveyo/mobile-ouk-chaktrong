@@ -53,7 +53,8 @@ class OutChaktrongAppBloc extends Cubit<OutChaktrongAppState> {
     emit(state.copyWith(local: local));
   }
 
-  void updateLanguage(String local) {
+  void updateLanguage(String local) async {
+    await appStrings.setLanguage(local);
     emit(state.copyWith(local: local));
   }
 }

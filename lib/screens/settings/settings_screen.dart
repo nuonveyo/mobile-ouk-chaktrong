@@ -262,7 +262,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       onTap: () async {
         BlocProvider.of<OutChaktrongAppBloc>(context).updateLanguage(languageCode);
         setState(() => _selectedLanguage = languageCode);
-        await appStrings.setLanguage(languageCode);
         if (_soundEnabled) {
           SoundService().playButton();
         }
