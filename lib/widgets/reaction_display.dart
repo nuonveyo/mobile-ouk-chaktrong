@@ -175,19 +175,19 @@ class _ReactionDisplayState extends State<ReactionDisplay>
             mainAxisSize: MainAxisSize.min,
             children: [
               // Chat icon
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.chat_bubble,
-                  size: 16,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 10),
+              // Container(
+              //   padding: const EdgeInsets.all(6),
+              //   decoration: BoxDecoration(
+              //     color: Colors.white.withValues(alpha: 0.2),
+              //     shape: BoxShape.circle,
+              //   ),
+              //   child: const Icon(
+              //     Icons.chat_bubble,
+              //     size: 16,
+              //     color: Colors.white,
+              //   ),
+              // ),
+              // const SizedBox(width: 10),
               // Reaction text
               Flexible(
                 child: Text(

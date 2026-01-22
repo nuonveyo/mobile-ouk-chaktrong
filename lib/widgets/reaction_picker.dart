@@ -21,6 +21,14 @@ const List<ReactionData> reactions = [
   ReactionData(code: 5, khmerText: 'សុំចាញ់ទៅ'),
   ReactionData(code: 6, khmerText: 'ស្មើរហើយ'),
   ReactionData(code: 7, khmerText: 'រាប់ឲ្យហើយទៅ'),
+  ReactionData(code: 8, khmerText: 'យូម្លេះ'),
+  ReactionData(code: 20, khmerText: '😡'),
+  ReactionData(code: 21, khmerText: '😱'),
+  ReactionData(code: 22, khmerText: '😂'),
+  ReactionData(code: 23, khmerText: '😘'),
+  ReactionData(code: 24, khmerText: '💋'),
+  ReactionData(code: 25, khmerText: '🙏'),
+  ReactionData(code: 26, khmerText: '👍'),
 ];
 
 /// Modal bottom sheet for selecting reactions
