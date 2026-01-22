@@ -1,6 +1,7 @@
 import 'dart:async' show Timer;
 import 'package:flame/game.dart';
 import 'package:flame/components.dart' hide Timer;
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../logic/logic.dart';
@@ -10,6 +11,29 @@ import '../services/vibration_service.dart';
 import 'components/board_component.dart';
 import 'components/piece_component.dart';
 import 'components/square_highlight.dart';
+
+/// Helper class for AI computation in isolate
+class _AiComputeParams {
+  final BoardState board;
+  final PlayerColor player;
+  final AiDifficulty difficulty;
+
+  _AiComputeParams({
+    required this.board,
+    required this.player,
+    required this.difficulty,
+  });
+}
+
+/// Top-level function for compute() - runs AI in background isolate
+Move? _computeAiMove(_AiComputeParams params) {
+  final aiEngine = AiEngine();
+  return aiEngine.getBestMove(
+    params.board,
+    params.player,
+    difficulty: params.difficulty,
+  );
+}
 
 /// Main Flame game class for Khmer Chess
 class ChessGame extends FlameGame {
@@ -219,21 +243,23 @@ class ChessGame extends FlameGame {
     }
   }
 
-  /// Make AI move using Minimax engine
-  void _makeAiMove() {
+  /// Make AI move using Minimax engine (runs in background isolate)
+  void _makeAiMove() async {
     // Add slight delay for UX (so human can see their move)
-    Future.delayed(const Duration(milliseconds: 300), () {
-      final aiEngine = AiEngine();
-      final bestMove = aiEngine.getBestMove(
-        _gameState.board,
-        PlayerColor.gold,
-        difficulty: aiDifficulty ?? AiDifficulty.medium,
-      );
-      
-      if (bestMove != null) {
-        _executeMove(bestMove);
-      }
-    });
+    await Future.delayed(const Duration(milliseconds: 300));
+    
+    // Run AI computation in background isolate to prevent UI freezing
+    final params = _AiComputeParams(
+      board: _gameState.board,
+      player: PlayerColor.gold,
+      difficulty: aiDifficulty ?? AiDifficulty.medium,
+    );
+    
+    final bestMove = await compute(_computeAiMove, params);
+    
+    if (bestMove != null && isMounted) {
+      _executeMove(bestMove);
+    }
   }
 
   /// Handle game over

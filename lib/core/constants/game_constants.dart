@@ -9,10 +9,10 @@ class GameConstants {
   // Fish promotion rank (0-indexed, so rank 5 = 6th row from bottom)
   static const int fishPromotionRank = 5;
 
-  // AI difficulty depths
+  // AI difficulty depths (higher = stronger but slower)
   static const int aiEasyDepth = 2;
-  static const int aiMediumDepth = 4;
-  static const int aiHardDepth = 6;
+  static const int aiMediumDepth = 3;  // Reduced for smoother gameplay
+  static const int aiHardDepth = 5;    // Reduced from 6 - depth 6 takes too long
 
   // Time controls (in seconds)
   static const int defaultTimeControl = 600; // 10 minutes
