@@ -225,7 +225,7 @@ class _GameScreenContentState extends State<_GameScreenContent> {
                     child: AspectRatio(
                       aspectRatio: 1,
                       child: Container(
-                        margin: const EdgeInsets.all(8),
+                        margin: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           boxShadow: [
                             BoxShadow(

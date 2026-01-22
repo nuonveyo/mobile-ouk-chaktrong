@@ -46,16 +46,17 @@ class PieceComponent extends PositionComponent {
       final svgString = await rootBundle.loadString(assetPath);
       final pictureInfo = await vg.loadPicture(SvgStringLoader(svgString), null);
       
-      // Convert to image
+      // Convert to image at high resolution for better quality
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(recorder);
-      final size = _squareSize * 0.75;
-      
-      canvas.scale(size / pictureInfo.size.width, size / pictureInfo.size.height);
+      // Rasterize at 2x size for crisp rendering
+      final renderSize = _squareSize * 2.0;
+
+      canvas.scale(renderSize / pictureInfo.size.width, renderSize / pictureInfo.size.height);
       canvas.drawPicture(pictureInfo.picture);
       
       final picture = recorder.endRecording();
-      _svgImage = await picture.toImage(size.toInt(), size.toInt());
+      _svgImage = await picture.toImage(renderSize.toInt(), renderSize.toInt());
       pictureInfo.picture.dispose();
     } catch (e) {
       // Fallback to text rendering if SVG fails
@@ -108,9 +109,9 @@ class PieceComponent extends PositionComponent {
     final pieceColor = isWhite ? AppColors.whitePiece : AppColors.goldPiece;
     final shadowColor = isWhite ? AppColors.whitePieceShadow : AppColors.goldPieceShadow;
 
-    // Piece circle background
+    // Piece circle background - increased size for better visibility
     final center = Offset(_squareSize / 2, _squareSize / 2);
-    final radius = _squareSize * 0.38;
+    final radius = _squareSize * 0.44;
 
     // Shadow
     canvas.drawCircle(
@@ -165,7 +166,8 @@ class PieceComponent extends PositionComponent {
   void _renderSvgImage(Canvas canvas, Offset center) {
     if (_svgImage == null) return;
     
-    final imageSize = _squareSize * 0.60;
+    // Increased display size for bigger pieces
+    final imageSize = _squareSize * 0.70;
     final offset = Offset(
       center.dx - imageSize / 2,
       center.dy - imageSize / 2,
@@ -175,7 +177,7 @@ class PieceComponent extends PositionComponent {
       _svgImage!,
       Rect.fromLTWH(0, 0, _svgImage!.width.toDouble(), _svgImage!.height.toDouble()),
       Rect.fromLTWH(offset.dx, offset.dy, imageSize, imageSize),
-      Paint(),
+      Paint()..filterQuality = FilterQuality.high,
     );
   }
 

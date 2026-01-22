@@ -51,6 +51,7 @@ flutter:
   generate: true
   
   assets:
+    - assets/boards/
     - assets/images/
     - assets/images/pieces/
     - assets/audio/

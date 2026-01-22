@@ -1,13 +1,15 @@
+import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/models.dart';
 import '../../core/constants/constants.dart';
 import 'piece_component.dart';
 import 'square_highlight.dart';
 
 /// The chess board component that renders the 8x8 grid
-class BoardComponent extends PositionComponent with TapCallbacks {
+class BoardComponent extends PositionComponent with TapCallbacks, HasGameReference {
   double _boardSize;
   final void Function(Position) onSquareTapped;
   final bool flipBoard; // If true, flip board so Gold is at bottom
@@ -19,6 +21,11 @@ class BoardComponent extends PositionComponent with TapCallbacks {
   Position? _lastMoveFrom;
   Position? _lastMoveTo;
   Position? _checkPosition; // Position of King in check
+  ui.Image? _boardImage;
+
+  // Board image has a wooden frame - this is the padding ratio on each side
+  // Adjust this value to match your board image's border
+  static const double _boardPaddingRatio = 0.025; // 2.5% padding on each side
 
   BoardComponent({
     required double boardSize,
@@ -29,7 +36,15 @@ class BoardComponent extends PositionComponent with TapCallbacks {
   }
 
   double get boardSize => _boardSize;
-  double get squareSize => _boardSize / 8;
+  
+  /// The padding around the playable area (wooden frame)
+  double get boardPadding => _boardSize * _boardPaddingRatio;
+  
+  /// The actual playable area size (excluding the frame)
+  double get playableSize => _boardSize - (boardPadding * 2);
+  
+  /// Size of each square in the playable area
+  double get squareSize => playableSize / 8;
 
   /// Resize the board
   void resize(double newSize) {
@@ -48,20 +63,57 @@ class BoardComponent extends PositionComponent with TapCallbacks {
   }
 
   @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    await _loadBoardImage();
+  }
+
+  Future<void> _loadBoardImage() async {
+    try {
+      final data = await rootBundle.load('assets/boards/board-1.png');
+      final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+      final frame = await codec.getNextFrame();
+      _boardImage = frame.image;
+    } catch (e) {
+      debugPrint('Failed to load board image: $e');
+    }
+  }
+
+  @override
   void render(Canvas canvas) {
     super.render(canvas);
     _renderBoard(canvas);
   }
 
   void _renderBoard(Canvas canvas) {
-    final lightPaint = Paint()..color = AppColors.lightSquare;
-    final darkPaint = Paint()..color = AppColors.darkSquare;
+    // Draw board image as background
+    if (_boardImage != null) {
+      canvas.drawImageRect(
+        _boardImage!,
+        Rect.fromLTWH(0, 0, _boardImage!.width.toDouble(), _boardImage!.height.toDouble()),
+        Rect.fromLTWH(0, 0, _boardSize, _boardSize),
+        Paint()..filterQuality = FilterQuality.high,
+      );
+    } else {
+      // Fallback to painted squares if image not loaded
+      final lightPaint = Paint()..color = AppColors.lightSquare;
+      final darkPaint = Paint()..color = AppColors.darkSquare;
+      for (var row = 0; row < 8; row++) {
+        for (var col = 0; col < 8; col++) {
+          final isLight = (row + col) % 2 == 0;
+          final pos = Position(row, col);
+          final screenPos = _positionToVector(pos);
+          final rect = Rect.fromLTWH(screenPos.x, screenPos.y, squareSize, squareSize);
+          canvas.drawRect(rect, isLight ? lightPaint : darkPaint);
+        }
+      }
+    }
+
     final selectedPaint = Paint()..color = AppColors.selectedSquare;
     final lastMovePaint = Paint()..color = AppColors.lastMove;
 
     for (var row = 0; row < 8; row++) {
       for (var col = 0; col < 8; col++) {
-        final isLight = (row + col) % 2 == 0;
         final pos = Position(row, col);
         final screenPos = _positionToVector(pos);
         
@@ -71,9 +123,6 @@ class BoardComponent extends PositionComponent with TapCallbacks {
           squareSize,
           squareSize,
         );
-
-        // Base square color
-        canvas.drawRect(rect, isLight ? lightPaint : darkPaint);
 
         // Last move highlight (light gold)
         if (pos == _lastMoveFrom || pos == _lastMoveTo) {
@@ -92,19 +141,7 @@ class BoardComponent extends PositionComponent with TapCallbacks {
         }
       }
     }
-
-    // Draw board border
-    final borderPaint = Paint()
-      ..color = AppColors.templeGold
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, _boardSize, _boardSize),
-      borderPaint,
-    );
-
-    // Draw coordinates
-    _renderCoordinates(canvas);
+    // Note: Coordinates removed - board image has its own frame and markings
   }
 
   void _renderCoordinates(Canvas canvas) {
@@ -149,8 +186,13 @@ class BoardComponent extends PositionComponent with TapCallbacks {
   @override
   bool onTapDown(TapDownEvent event) {
     final localPos = event.localPosition;
-    int col = (localPos.x / squareSize).floor();
-    int row = 7 - (localPos.y / squareSize).floor(); // Flip for board coords
+    
+    // Account for board padding when calculating tap position
+    final adjustedX = localPos.x - boardPadding;
+    final adjustedY = localPos.y - boardPadding;
+    
+    int col = (adjustedX / squareSize).floor();
+    int row = 7 - (adjustedY / squareSize).floor(); // Flip for board coords
     
     // If board is flipped, invert coordinates
     if (flipBoard) {
@@ -196,16 +238,17 @@ class BoardComponent extends PositionComponent with TapCallbacks {
   }
 
   Vector2 _positionToVector(Position pos) {
+    // Add board padding offset to align pieces with actual grid cells
     if (flipBoard) {
       // Flip both row and column for Gold player
       return Vector2(
-        (7 - pos.col) * squareSize,
-        pos.row * squareSize,
+        boardPadding + (7 - pos.col) * squareSize,
+        boardPadding + pos.row * squareSize,
       );
     }
     return Vector2(
-      pos.col * squareSize,
-      (7 - pos.row) * squareSize,
+      boardPadding + pos.col * squareSize,
+      boardPadding + (7 - pos.row) * squareSize,
     );
   }
 
