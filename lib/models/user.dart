@@ -27,7 +27,7 @@ class User extends Equatable {
     final now = DateTime.now();
     return User(
       name: 'Player',
-      points: 0,
+      points: 100,
       createdAt: now,
       updatedAt: now,
     );

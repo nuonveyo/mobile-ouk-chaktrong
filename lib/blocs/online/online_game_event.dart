@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+
 import '../../models/models.dart';
 
 /// Base class for online game events
@@ -12,9 +13,9 @@ sealed class OnlineGameEvent extends Equatable {
 /// Create a new game room
 class CreateRoomRequested extends OnlineGameEvent {
   final int timeControl;
-  
+
   const CreateRoomRequested({this.timeControl = 600});
-  
+
   @override
   List<Object?> get props => [timeControl];
 }
@@ -22,9 +23,9 @@ class CreateRoomRequested extends OnlineGameEvent {
 /// Join an existing room
 class JoinRoomRequested extends OnlineGameEvent {
   final String roomId;
-  
+
   const JoinRoomRequested(this.roomId);
-  
+
   @override
   List<Object?> get props => [roomId];
 }
@@ -37,9 +38,9 @@ class LeaveRoomRequested extends OnlineGameEvent {
 /// Room data updated (from Firestore stream)
 class RoomUpdated extends OnlineGameEvent {
   final OnlineGameRoom? room;
-  
+
   const RoomUpdated(this.room);
-  
+
   @override
   List<Object?> get props => [room];
 }
@@ -51,7 +52,7 @@ class OnlineMoveExecuted extends OnlineGameEvent {
   final String lastMoveTo;
   final int whiteTime;
   final int goldTime;
-  
+
   const OnlineMoveExecuted({
     required this.moveNotation,
     required this.lastMoveFrom,
@@ -59,17 +60,23 @@ class OnlineMoveExecuted extends OnlineGameEvent {
     required this.whiteTime,
     required this.goldTime,
   });
-  
+
   @override
-  List<Object?> get props => [moveNotation, lastMoveFrom, lastMoveTo, whiteTime, goldTime];
+  List<Object?> get props => [
+    moveNotation,
+    lastMoveFrom,
+    lastMoveTo,
+    whiteTime,
+    goldTime,
+  ];
 }
 
 /// End the online game
 class OnlineGameEnded extends OnlineGameEvent {
   final String result; // 'white', 'gold', 'draw'
-  
+
   const OnlineGameEnded(this.result);
-  
+
   @override
   List<Object?> get props => [result];
 }
@@ -82,9 +89,19 @@ class RefreshRoomsRequested extends OnlineGameEvent {
 /// Watch a room that's already been joined (for game screen)
 class WatchRoomRequested extends OnlineGameEvent {
   final String roomId;
-  
+
   const WatchRoomRequested(this.roomId);
-  
+
   @override
   List<Object?> get props => [roomId];
+}
+
+/// Update user point when send reaction
+class DeductPointsRequested extends OnlineGameEvent {
+  final int points;
+
+  const DeductPointsRequested({this.points = 0});
+
+  @override
+  List<Object?> get props => [points];
 }

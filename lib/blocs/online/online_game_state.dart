@@ -9,6 +9,7 @@ class OnlineGameBlocState extends Equatable {
   final bool isHost;
   final bool isLoading;
   final String? errorMessage;
+  final int points;
 
   const OnlineGameBlocState({
     this.availableRooms = const [],
@@ -17,6 +18,7 @@ class OnlineGameBlocState extends Equatable {
     this.isHost = false,
     this.isLoading = false,
     this.errorMessage,
+    this.points = 0,
   });
 
   /// Initial state
@@ -31,10 +33,8 @@ class OnlineGameBlocState extends Equatable {
   bool get isGameStarted => currentRoom?.isPlaying == true;
 
   /// Check if waiting for opponent
-  bool get isWaitingForOpponent => 
-      currentRoom != null && 
-      currentRoom!.isWaiting && 
-      isHost;
+  bool get isWaitingForOpponent =>
+      currentRoom != null && currentRoom!.isWaiting && isHost;
 
   /// Get player color (host = white, guest = gold)
   String get playerColor => isHost ? 'white' : 'gold';
@@ -54,6 +54,7 @@ class OnlineGameBlocState extends Equatable {
     String? errorMessage,
     bool clearRoom = false,
     bool clearError = false,
+    int? points,
   }) {
     return OnlineGameBlocState(
       availableRooms: availableRooms ?? this.availableRooms,
@@ -62,16 +63,18 @@ class OnlineGameBlocState extends Equatable {
       isHost: isHost ?? this.isHost,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      points: points ?? this.points,
     );
   }
 
   @override
   List<Object?> get props => [
-        availableRooms,
-        currentRoom,
-        playerId,
-        isHost,
-        isLoading,
-        errorMessage,
-      ];
+    availableRooms,
+    currentRoom,
+    playerId,
+    isHost,
+    isLoading,
+    errorMessage,
+    points,
+  ];
 }

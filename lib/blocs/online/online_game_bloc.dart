@@ -1,6 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../models/models.dart';
+
 import '../../repositories/repositories.dart';
 import 'online_game_event.dart';
 import 'online_game_state.dart';
@@ -13,7 +14,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
   final AuthRepository _authRepository;
   final OnlineGameRepository _gameRepository;
   final UserRepository _userRepository;
-  
+
   StreamSubscription? _roomSubscription;
   StreamSubscription? _availableRoomsSubscription;
 
@@ -21,10 +22,10 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     required AuthRepository authRepository,
     required OnlineGameRepository gameRepository,
     UserRepository? userRepository,
-  })  : _authRepository = authRepository,
-        _gameRepository = gameRepository,
-        _userRepository = userRepository ?? UserRepository(),
-        super(OnlineGameBlocState.initial()) {
+  }) : _authRepository = authRepository,
+       _gameRepository = gameRepository,
+       _userRepository = userRepository ?? UserRepository(),
+       super(OnlineGameBlocState.initial()) {
     on<CreateRoomRequested>(_onCreateRoom);
     on<JoinRoomRequested>(_onJoinRoom);
     on<LeaveRoomRequested>(_onLeaveRoom);
@@ -33,7 +34,8 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     on<OnlineGameEnded>(_onGameEnded);
     on<RefreshRoomsRequested>(_onRefreshRooms);
     on<WatchRoomRequested>(_onWatchRoom);
-    
+    on<DeductPointsRequested>(_deductUserPoint);
+
     // Sign in and then start listening to rooms
     _initializeAndListen();
   }
@@ -42,8 +44,9 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     try {
       // Ensure user is signed in before listening to Firestore
       final user = await _authRepository.ensureSignedIn();
-      emit(state.copyWith(playerId: user.uid));
-      
+      final localUser = await _userRepository.getUser();
+      emit(state.copyWith(playerId: user.uid, points: localUser.points));
+
       // Now safe to listen to rooms
       _startListeningToRooms();
     } catch (e) {
@@ -80,31 +83,35 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
 
     try {
       final user = await _authRepository.ensureSignedIn();
-      
+
       // Get player name from local database
       final localUser = await _userRepository.getUser();
       final playerName = localUser.name;
-      
+
       final room = await _gameRepository.createRoom(
         hostPlayerId: user.uid,
         hostPlayerName: playerName,
         timeControl: event.timeControl,
       );
 
-      emit(state.copyWith(
-        currentRoom: room,
-        playerId: user.uid,
-        isHost: true,
-        isLoading: false,
-      ));
+      emit(
+        state.copyWith(
+          currentRoom: room,
+          playerId: user.uid,
+          isHost: true,
+          isLoading: false,
+        ),
+      );
 
       // Start listening to room updates
       _startListeningToRoom(room.id);
     } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: 'Failed to create room: $e',
-      ));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          errorMessage: 'Failed to create room: $e',
+        ),
+      );
     }
   }
 
@@ -116,11 +123,11 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
 
     try {
       final user = await _authRepository.ensureSignedIn();
-      
+
       // Get player name from local database
       final localUser = await _userRepository.getUser();
       final playerName = localUser.name;
-      
+
       final room = await _gameRepository.joinRoom(
         roomId: event.roomId,
         guestPlayerId: user.uid,
@@ -128,44 +135,46 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
       );
 
       if (room == null) {
-        emit(state.copyWith(
-          isLoading: false,
-          errorMessage: 'Room not available',
-        ));
+        emit(
+          state.copyWith(isLoading: false, errorMessage: 'Room not available'),
+        );
         return;
       }
 
-      emit(state.copyWith(
-        currentRoom: room,
-        playerId: user.uid,
-        isHost: false,
-        isLoading: false,
-      ));
+      emit(
+        state.copyWith(
+          currentRoom: room,
+          playerId: user.uid,
+          isHost: false,
+          isLoading: false,
+        ),
+      );
 
       // Start listening to room updates
       _startListeningToRoom(room.id);
     } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: 'Failed to join room: $e',
-      ));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          errorMessage: 'Failed to join room: $e',
+        ),
+      );
     }
   }
 
   void _startListeningToRoom(String roomId) {
     _roomSubscription?.cancel();
-    _roomSubscription = _gameRepository.watchRoom(roomId).listen(
-      (room) => add(RoomUpdated(room)),
-      onError: (error) {
-        emit(state.copyWith(errorMessage: 'Connection error: $error'));
-      },
-    );
+    _roomSubscription = _gameRepository
+        .watchRoom(roomId)
+        .listen(
+          (room) => add(RoomUpdated(room)),
+          onError: (error) {
+            emit(state.copyWith(errorMessage: 'Connection error: $error'));
+          },
+        );
   }
 
-  void _onRoomUpdated(
-    RoomUpdated event,
-    Emitter<OnlineGameBlocState> emit,
-  ) {
+  void _onRoomUpdated(RoomUpdated event, Emitter<OnlineGameBlocState> emit) {
     if (event.room == null) {
       // Room was deleted
       emit(state.copyWith(clearRoom: true));
@@ -183,7 +192,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     if (state.currentRoom != null) {
       await _gameRepository.leaveRoom(state.currentRoom!.id);
     }
-    
+
     _roomSubscription?.cancel();
     emit(state.copyWith(clearRoom: true));
     _startListeningToRooms();
@@ -196,7 +205,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     if (state.currentRoom == null) return;
 
     final nextTurn = state.playerColor == 'white' ? 'gold' : 'white';
-    
+
     await _gameRepository.makeMove(
       roomId: state.currentRoom!.id,
       moveNotation: event.moveNotation,
@@ -234,23 +243,32 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     Emitter<OnlineGameBlocState> emit,
   ) async {
     emit(state.copyWith(isLoading: true, clearError: true));
-    
+
     try {
       // Ensure user is signed in
       final user = await _authRepository.ensureSignedIn();
       emit(state.copyWith(playerId: user.uid));
-      
+
       // Start listening to the room - the room data will come from the stream
       _startListeningToRoom(event.roomId);
-      
+
       // Determine if we're the host based on the room data
       // This will be updated when RoomUpdated event is received
       emit(state.copyWith(isLoading: false));
     } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: 'Failed to connect: $e',
-      ));
+      emit(
+        state.copyWith(isLoading: false, errorMessage: 'Failed to connect: $e'),
+      );
     }
+  }
+
+  Future<void> _deductUserPoint(
+    DeductPointsRequested event,
+    Emitter<OnlineGameBlocState> emit,
+  ) async {
+    if (state.points == 0) return;
+    final deductPoints = state.points - event.points;
+    await _userRepository.updateProfile(points: deductPoints);
+    emit(state.copyWith(points: deductPoints));
   }
 }

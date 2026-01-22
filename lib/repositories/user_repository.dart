@@ -57,12 +57,13 @@ class UserRepository {
     String? avatarUrl,
     String? phoneNumber,
     String? email,
+    int? points,
   }) async {
     final user = await getUser();
     final updatedUser = User(
       id: user.id,
       name: name ?? user.name,
-      points: user.points,
+      points: points ?? user.points,
       avatarUrl: avatarUrl ?? user.avatarUrl,
       phoneNumber: phoneNumber ?? user.phoneNumber,
       email: email ?? user.email,

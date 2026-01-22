@@ -11,7 +11,10 @@ class PlayerInfoCard extends StatelessWidget {
   final bool isCurrentTurn;
   final bool isInCheck;
   final int timeRemaining;
+  final int? points;
   final List<Piece> capturedPieces;
+  final bool? showReaction;
+  final VoidCallback? onReactionClick;
 
   const PlayerInfoCard({
     super.key,
@@ -20,7 +23,10 @@ class PlayerInfoCard extends StatelessWidget {
     required this.isCurrentTurn,
     required this.timeRemaining,
     this.isInCheck = false,
+    this.points,
     this.capturedPieces = const [],
+    this.showReaction = false,
+    this.onReactionClick,
   });
 
   @override
@@ -36,41 +42,60 @@ class PlayerInfoCard extends StatelessWidget {
             : AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isInCheck 
-              ? AppColors.danger 
-              : isCurrentTurn 
-                  ? AppColors.templeGold 
-                  : Colors.transparent,
+          color: isInCheck
+              ? AppColors.danger
+              : isCurrentTurn
+              ? AppColors.templeGold
+              : Colors.transparent,
           width: 2,
         ),
       ),
       child: Row(
         children: [
           // Avatar
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: color == PlayerColor.white 
-                  ? AppColors.whitePiece 
-                  : AppColors.goldPiece,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+          Stack(
+            alignment: Alignment.topRight,
+            children: [
+              Container(
+                margin: EdgeInsets.all(4),
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: color == PlayerColor.white
+                      ? AppColors.whitePiece
+                      : AppColors.goldPiece,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Icon(
-              Icons.person,
-              color: AppColors.deepPurple,
-              size: 26,
-            ),
+                child: Icon(
+                  Icons.person,
+                  color: AppColors.deepPurple,
+                  size: 26,
+                ),
+              ),
+              if (showReaction == true)
+                // Reaction button
+                GestureDetector(
+                  onTap: onReactionClick,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.topRight,
+                    child: const Icon(Icons.emoji_emotions_outlined),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(width: 12),
-          
+
           // Name and status
           Expanded(
             child: Column(
@@ -89,7 +114,10 @@ class PlayerInfoCard extends StatelessWidget {
                     if (isInCheck) ...[
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.danger,
                           borderRadius: BorderRadius.circular(4),
@@ -107,13 +135,25 @@ class PlayerInfoCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 2),
+                if (points != null)
+                  Text(
+                    '🏆 ${points ?? 0} pts',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                const SizedBox(height: 2),
                 Row(
                   children: [
                     Container(
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: isCurrentTurn ? AppColors.success : AppColors.textMuted,
+                        color: isCurrentTurn
+                            ? AppColors.success
+                            : AppColors.textMuted,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -122,7 +162,9 @@ class PlayerInfoCard extends StatelessWidget {
                       isCurrentTurn ? 'Your turn' : 'Waiting...',
                       style: TextStyle(
                         fontSize: 12,
-                        color: isCurrentTurn ? AppColors.success : AppColors.textMuted,
+                        color: isCurrentTurn
+                            ? AppColors.success
+                            : AppColors.textMuted,
                       ),
                     ),
                   ],
@@ -130,7 +172,7 @@ class PlayerInfoCard extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Captured pieces indicator
           if (capturedPieces.isNotEmpty) ...[
             Container(
@@ -150,7 +192,7 @@ class PlayerInfoCard extends StatelessWidget {
             ),
             const SizedBox(width: 8),
           ],
-          
+
           // Chess clock
           ChessClockWidget(
             timeRemainingSeconds: timeRemaining,

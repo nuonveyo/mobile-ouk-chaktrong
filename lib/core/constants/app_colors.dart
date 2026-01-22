@@ -40,4 +40,6 @@ class AppColors {
   static const Color whitePieceShadow = Color(0xFFE0E0E0);
   static const Color goldPiece = Color(0xFFD4AF37);
   static const Color goldPieceShadow = Color(0xFFB8860B);
+
+  static const Color white = Colors.white;
 }
