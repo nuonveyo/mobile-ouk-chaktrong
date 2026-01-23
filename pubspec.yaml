@@ -53,7 +53,9 @@ flutter:
   assets:
     - assets/boards/
     - assets/images/
-    - assets/images/pieces/
+    - assets/pieces-2/
+    - assets/pieces-2/white/
+    - assets/pieces-2/black/
     - assets/audio/
     - assets/pieces/
     - assets/pieces/white/
