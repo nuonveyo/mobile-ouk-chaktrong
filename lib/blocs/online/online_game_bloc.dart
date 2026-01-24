@@ -17,6 +17,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
 
   StreamSubscription? _roomSubscription;
   StreamSubscription? _availableRoomsSubscription;
+  StreamSubscription? _activeGamesSubscription;
 
   OnlineGameBloc({
     required AuthRepository authRepository,
@@ -35,6 +36,9 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     on<RefreshRoomsRequested>(_onRefreshRooms);
     on<WatchRoomRequested>(_onWatchRoom);
     on<DeductPointsRequested>(_deductUserPoint);
+    on<WatchAsSpectatorRequested>(_onWatchAsSpectator);
+    on<LeaveSpectatingRequested>(_onLeaveSpectating);
+    on<ActiveGamesUpdated>(_onActiveGamesUpdated);
 
     // Sign in and then start listening to rooms
     _initializeAndListen();
@@ -58,6 +62,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
   Future<void> close() {
     _roomSubscription?.cancel();
     _availableRoomsSubscription?.cancel();
+    _activeGamesSubscription?.cancel();
     return super.close();
   }
 
@@ -71,6 +76,19 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
       },
       onError: (error) {
         emit(state.copyWith(errorMessage: 'Failed to load rooms: $error'));
+      },
+    );
+    
+    // Also listen to active games for spectating
+    _startListeningToActiveGames();
+  }
+
+  void _startListeningToActiveGames() {
+    _activeGamesSubscription?.cancel();
+    _activeGamesSubscription = _gameRepository.getActiveGames().listen(
+      (games) => add(ActiveGamesUpdated(games)),
+      onError: (error) {
+        // Silently handle - not critical if active games fail
       },
     );
   }
@@ -270,5 +288,55 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     final deductPoints = state.points - event.points;
     await _userRepository.updateProfile(points: deductPoints);
     emit(state.copyWith(points: deductPoints));
+  }
+
+  /// Watch a game as a spectator (read-only)
+  Future<void> _onWatchAsSpectator(
+    WatchAsSpectatorRequested event,
+    Emitter<OnlineGameBlocState> emit,
+  ) async {
+    emit(state.copyWith(isLoading: true, clearError: true));
+
+    try {
+      // Join as spectator (increment count)
+      await _gameRepository.joinAsSpectator(event.roomId);
+
+      emit(state.copyWith(
+        isSpectating: true,
+        isLoading: false,
+      ));
+
+      // Start listening to room updates
+      _startListeningToRoom(event.roomId);
+    } catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to join as spectator: $e',
+      ));
+    }
+  }
+
+  /// Leave spectating a game
+  Future<void> _onLeaveSpectating(
+    LeaveSpectatingRequested event,
+    Emitter<OnlineGameBlocState> emit,
+  ) async {
+    if (state.currentRoom != null) {
+      await _gameRepository.leaveAsSpectator(state.currentRoom!.id);
+    }
+
+    _roomSubscription?.cancel();
+    emit(state.copyWith(clearRoom: true, isSpectating: false));
+    _startListeningToRooms();
+  }
+
+  /// Handle active games list update
+  void _onActiveGamesUpdated(
+    ActiveGamesUpdated event,
+    Emitter<OnlineGameBlocState> emit,
+  ) {
+    if (!state.isInRoom && !state.isSpectating) {
+      emit(state.copyWith(activeGames: event.games));
+    }
   }
 }

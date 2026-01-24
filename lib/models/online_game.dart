@@ -16,6 +16,7 @@ class OnlineGameRoom extends Equatable {
   final OnlineGameData? gameData;
   final int? latestReactionCode;      // 1-7 for reactions
   final String? latestReactionSender; // player ID who sent reaction
+  final int spectatorCount;           // Number of spectators watching
 
   const OnlineGameRoom({
     required this.id,
@@ -30,6 +31,7 @@ class OnlineGameRoom extends Equatable {
     this.gameData,
     this.latestReactionCode,
     this.latestReactionSender,
+    this.spectatorCount = 0,
   });
 
   bool get isFull => hostPlayerId != null && guestPlayerId != null;
@@ -58,6 +60,7 @@ class OnlineGameRoom extends Equatable {
           : null,
       latestReactionCode: json['latestReactionCode'] as int?,
       latestReactionSender: json['latestReactionSender'] as String?,
+      spectatorCount: json['spectatorCount'] as int? ?? 0,
     );
   }
 
@@ -74,6 +77,7 @@ class OnlineGameRoom extends Equatable {
       'gameData': gameData?.toJson(),
       'latestReactionCode': latestReactionCode,
       'latestReactionSender': latestReactionSender,
+      'spectatorCount': spectatorCount,
     };
   }
 
@@ -90,6 +94,7 @@ class OnlineGameRoom extends Equatable {
     OnlineGameData? gameData,
     int? latestReactionCode,
     String? latestReactionSender,
+    int? spectatorCount,
   }) {
     return OnlineGameRoom(
       id: id ?? this.id,
@@ -104,6 +109,7 @@ class OnlineGameRoom extends Equatable {
       gameData: gameData ?? this.gameData,
       latestReactionCode: latestReactionCode ?? this.latestReactionCode,
       latestReactionSender: latestReactionSender ?? this.latestReactionSender,
+      spectatorCount: spectatorCount ?? this.spectatorCount,
     );
   }
 
@@ -111,7 +117,7 @@ class OnlineGameRoom extends Equatable {
   List<Object?> get props => [
         id, hostPlayerId, guestPlayerId, hostPlayerName, guestPlayerName,
         status, timeControl, createdAt, startedAt, gameData,
-        latestReactionCode, latestReactionSender,
+        latestReactionCode, latestReactionSender, spectatorCount,
       ];
 }
 

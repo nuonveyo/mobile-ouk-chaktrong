@@ -105,3 +105,28 @@ class DeductPointsRequested extends OnlineGameEvent {
   @override
   List<Object?> get props => [points];
 }
+
+/// Watch a game as a spectator (read-only)
+class WatchAsSpectatorRequested extends OnlineGameEvent {
+  final String roomId;
+
+  const WatchAsSpectatorRequested(this.roomId);
+
+  @override
+  List<Object?> get props => [roomId];
+}
+
+/// Leave spectating a game
+class LeaveSpectatingRequested extends OnlineGameEvent {
+  const LeaveSpectatingRequested();
+}
+
+/// Active games list updated (for spectating)
+class ActiveGamesUpdated extends OnlineGameEvent {
+  final List<OnlineGameRoom> games;
+
+  const ActiveGamesUpdated(this.games);
+
+  @override
+  List<Object?> get props => [games];
+}

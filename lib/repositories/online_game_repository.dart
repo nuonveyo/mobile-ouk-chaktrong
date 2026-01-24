@@ -104,13 +104,27 @@ class OnlineGameRepository {
     String? lastMoveFrom,
     String? lastMoveTo,
   }) async {
-    await _gamesRef.doc(roomId).update({
-      'gameData.moves': FieldValue.arrayUnion([moveNotation]),
-      'gameData.currentTurn': nextTurn,
-      'gameData.whiteTimeRemaining': whiteTime,
-      'gameData.goldTimeRemaining': goldTime,
-      'gameData.lastMoveFrom': lastMoveFrom,
-      'gameData.lastMoveTo': lastMoveTo,
+    final docRef = _gamesRef.doc(roomId);
+
+    await _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      if (!snapshot.exists) return;
+
+      final data = snapshot.data()!;
+      final gameData = data['gameData'] as Map<String, dynamic>;
+      final moves = List<String>.from(gameData['moves'] ?? []);
+      
+      // Append the new move
+      moves.add(moveNotation);
+
+      transaction.update(docRef, {
+        'gameData.moves': moves,
+        'gameData.currentTurn': nextTurn,
+        'gameData.whiteTimeRemaining': whiteTime,
+        'gameData.goldTimeRemaining': goldTime,
+        'gameData.lastMoveFrom': lastMoveFrom,
+        'gameData.lastMoveTo': lastMoveTo,
+      });
     });
   }
 
@@ -168,5 +182,31 @@ class OnlineGameRepository {
       batch.delete(doc.reference);
     }
     await batch.commit();
+  }
+
+  /// Get active games (currently playing) for spectating
+  Stream<List<OnlineGameRoom>> getActiveGames() {
+    return _gamesRef
+        .where('status', isEqualTo: GameStatus.playing.name)
+        .orderBy('createdAt', descending: true)  // Using createdAt for consistent indexing
+        .limit(20)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => OnlineGameRoom.fromJson(doc.data(), doc.id))
+            .toList());
+  }
+
+  /// Join a game as a spectator (increment spectator count)
+  Future<void> joinAsSpectator(String roomId) async {
+    await _gamesRef.doc(roomId).update({
+      'spectatorCount': FieldValue.increment(1),
+    });
+  }
+
+  /// Leave spectating a game (decrement spectator count)
+  Future<void> leaveAsSpectator(String roomId) async {
+    await _gamesRef.doc(roomId).update({
+      'spectatorCount': FieldValue.increment(-1),
+    });
   }
 }

@@ -4,18 +4,22 @@ import '../../models/models.dart';
 /// State for online game BLoC
 class OnlineGameBlocState extends Equatable {
   final List<OnlineGameRoom> availableRooms;
+  final List<OnlineGameRoom> activeGames;  // Games in progress (for spectating)
   final OnlineGameRoom? currentRoom;
   final String? playerId;
   final bool isHost;
+  final bool isSpectating;  // True if spectating a game
   final bool isLoading;
   final String? errorMessage;
   final int points;
 
   const OnlineGameBlocState({
     this.availableRooms = const [],
+    this.activeGames = const [],
     this.currentRoom,
     this.playerId,
     this.isHost = false,
+    this.isSpectating = false,
     this.isLoading = false,
     this.errorMessage,
     this.points = 0,
@@ -47,9 +51,11 @@ class OnlineGameBlocState extends Equatable {
 
   OnlineGameBlocState copyWith({
     List<OnlineGameRoom>? availableRooms,
+    List<OnlineGameRoom>? activeGames,
     OnlineGameRoom? currentRoom,
     String? playerId,
     bool? isHost,
+    bool? isSpectating,
     bool? isLoading,
     String? errorMessage,
     bool clearRoom = false,
@@ -58,9 +64,11 @@ class OnlineGameBlocState extends Equatable {
   }) {
     return OnlineGameBlocState(
       availableRooms: availableRooms ?? this.availableRooms,
+      activeGames: activeGames ?? this.activeGames,
       currentRoom: clearRoom ? null : (currentRoom ?? this.currentRoom),
       playerId: playerId ?? this.playerId,
       isHost: isHost ?? this.isHost,
+      isSpectating: clearRoom ? false : (isSpectating ?? this.isSpectating),
       isLoading: isLoading ?? this.isLoading,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       points: points ?? this.points,
@@ -70,9 +78,11 @@ class OnlineGameBlocState extends Equatable {
   @override
   List<Object?> get props => [
     availableRooms,
+    activeGames,
     currentRoom,
     playerId,
     isHost,
+    isSpectating,
     isLoading,
     errorMessage,
     points,

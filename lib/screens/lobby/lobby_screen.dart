@@ -82,9 +82,14 @@ class _LobbyScreenContent extends StatelessWidget {
 
           return _RoomList(
             rooms: state.availableRooms,
+            activeGames: state.activeGames,
             onCreateRoom: () => _showCreateRoomDialog(context),
             onJoinRoom: (roomId) {
               context.read<OnlineGameBloc>().add(JoinRoomRequested(roomId));
+            },
+            onWatchGame: (roomId) {
+              context.read<OnlineGameBloc>().add(WatchAsSpectatorRequested(roomId));
+              context.go('/spectate/$roomId');
             },
           );
         },
@@ -187,46 +192,49 @@ class _TimeChip extends StatelessWidget {
 
 class _RoomList extends StatelessWidget {
   final List<OnlineGameRoom> rooms;
+  final List<OnlineGameRoom> activeGames;
   final VoidCallback onCreateRoom;
   final void Function(String) onJoinRoom;
+  final void Function(String) onWatchGame;
 
   const _RoomList({
     required this.rooms,
+    required this.activeGames,
     required this.onCreateRoom,
     required this.onJoinRoom,
+    required this.onWatchGame,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return ListView(
+      padding: const EdgeInsets.all(16),
       children: [
         // Create room button
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: onCreateRoom,
-              icon: const Icon(Icons.add),
-              label: Text(appStrings.createRoom),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: onCreateRoom,
+            icon: const Icon(Icons.add),
+            label: Text(appStrings.createRoom),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
         ),
         
+        const SizedBox(height: 16),
         const Divider(color: AppColors.surfaceLight),
+        const SizedBox(height: 8),
         
-        // Available rooms header
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
+        // Live Games section (for spectating)
+        if (activeGames.isNotEmpty) ...[
+          Row(
             children: [
-              const Icon(Icons.groups, color: AppColors.templeGold, size: 20),
+              const Icon(Icons.live_tv, color: Colors.red, size: 20),
               const SizedBox(width: 8),
               Text(
-                '${appStrings.availableRooms} (${rooms.length})',
+                '${appStrings.liveGames} (${activeGames.length})',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -235,51 +243,68 @@ class _RoomList extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          ...activeGames.map((game) => _LiveGameCard(
+            room: game,
+            onWatch: () => onWatchGame(game.id),
+          )),
+          const SizedBox(height: 16),
+          const Divider(color: AppColors.surfaceLight),
+          const SizedBox(height: 8),
+        ],
+        
+        // Available rooms header
+        Row(
+          children: [
+            const Icon(Icons.groups, color: AppColors.templeGold, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              '${appStrings.availableRooms} (${rooms.length})',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 12),
         
         // Room list
-        Expanded(
-          child: rooms.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.hourglass_empty,
-                        size: 48,
-                        color: AppColors.textMuted,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        appStrings.noRoomsAvailable,
-                        style: const TextStyle(
-                          color: AppColors.textMuted,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        appStrings.createRoomToStart,
-                        style: const TextStyle(
-                          color: AppColors.textMuted,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: rooms.length,
-                  itemBuilder: (context, index) {
-                    final room = rooms[index];
-                    return _RoomCard(
-                      room: room,
-                      onJoin: () => onJoinRoom(room.id),
-                    );
-                  },
+        if (rooms.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 32),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.hourglass_empty,
+                  size: 48,
+                  color: AppColors.textMuted,
                 ),
-        ),
+                const SizedBox(height: 16),
+                Text(
+                  appStrings.noRoomsAvailable,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  appStrings.createRoomToStart,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ...rooms.map((room) => _RoomCard(
+            room: room,
+            onJoin: () => onJoinRoom(room.id),
+          )),
       ],
     );
   }
@@ -329,6 +354,76 @@ class _RoomCard extends StatelessWidget {
         trailing: ElevatedButton(
           onPressed: onJoin,
           child: Text(appStrings.join),
+        ),
+      ),
+    );
+  }
+}
+
+class _LiveGameCard extends StatelessWidget {
+  final OnlineGameRoom room;
+  final VoidCallback onWatch;
+
+  const _LiveGameCard({
+    required this.room,
+    required this.onWatch,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final minutes = room.timeControl ~/ 60;
+    final hostName = room.hostPlayerName ?? 'Player 1';
+    final guestName = room.guestPlayerName ?? 'Player 2';
+    
+    return Card(
+      color: AppColors.surface,
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: Colors.red.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.live_tv,
+            color: Colors.red,
+          ),
+        ),
+        title: Text(
+          '$hostName vs $guestName',
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        subtitle: Row(
+          children: [
+            Text(
+              '${appStrings.minFormat(minutes)}',
+              style: const TextStyle(color: AppColors.textMuted),
+            ),
+            if (room.spectatorCount > 0) ...[
+              const SizedBox(width: 8),
+              Icon(Icons.visibility, size: 14, color: AppColors.textMuted),
+              const SizedBox(width: 4),
+              Text(
+                '${room.spectatorCount}',
+                style: const TextStyle(color: AppColors.textMuted),
+              ),
+            ],
+          ],
+        ),
+        trailing: OutlinedButton.icon(
+          onPressed: onWatch,
+          icon: const Icon(Icons.visibility, size: 18),
+          label: Text(appStrings.watch),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.red,
+            side: const BorderSide(color: Colors.red),
+          ),
         ),
       ),
     );

@@ -6,6 +6,7 @@ import '../../screens/settings/settings_screen.dart';
 import '../../screens/lobby/lobby_screen.dart';
 import '../../screens/test/test_scenarios_screen.dart';
 import '../../screens/online/online_game_screen.dart';
+import '../../screens/online/spectator_screen.dart';
 import '../../core/constants/game_constants.dart';
 
 /// App router configuration using GoRouter
@@ -57,6 +58,14 @@ class AppRouter {
         builder: (context, state) {
           final roomId = state.pathParameters['roomId']!;
           return OnlineGameScreen(roomId: roomId);
+        },
+      ),
+      GoRoute(
+        path: '/spectate/:roomId',
+        name: 'spectate',
+        builder: (context, state) {
+          final roomId = state.pathParameters['roomId']!;
+          return SpectatorScreen(roomId: roomId);
         },
       ),
     ],

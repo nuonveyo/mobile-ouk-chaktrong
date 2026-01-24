@@ -156,6 +156,10 @@ class AppStrings {
   String get room => _get('Room', 'បន្ទប់');
   String minFormat(int min) => _get('$min min', '$min នាទី');
   String get waitingOpponentShort => _get('Waiting for opponent', 'រង់ចាំគូប្រកួត');
+  String get liveGames => _get('Live Games', 'ល្បែងផ្ទាល់');
+  String get watch => _get('Watch', 'មើល');
+  String get spectating => _get('Spectating', 'កំពុងមើល');
+  String get spectators => _get('Spectators', 'អ្នកមើល');
 
   // Pieces (for accessibility and rules)
   String get king => _get('King', 'ស្ដេច');
