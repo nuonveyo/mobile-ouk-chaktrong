@@ -66,7 +66,10 @@ class _GameScreenContentState extends State<_GameScreenContent> {
     _initGame();
   }
 
+  bool _gameOverDialogShown = false;
+
   void _initGame() {
+    _gameOverDialogShown = false;
     _game = ChessGame(
       gameMode: widget.gameMode,
       aiDifficulty: widget.aiDifficulty,
@@ -77,8 +80,12 @@ class _GameScreenContentState extends State<_GameScreenContent> {
         });
         
         // Check if game ended due to counting limit or other draw/win
-        if (gameState.isGameOver && mounted) {
-          _showGameOverDialog(context, gameState);
+        if (gameState.isGameOver && mounted && !_gameOverDialogShown) {
+          _gameOverDialogShown = true;
+          // Small delay to let user see the final board state
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            if (mounted) _showGameOverDialog(context, gameState);
+          });
         }
       },
     );
@@ -184,8 +191,11 @@ class _GameScreenContentState extends State<_GameScreenContent> {
         listenWhen: (previous, current) => 
             previous.gameState.result != current.gameState.result,
         listener: (context, state) {
-          if (state.isGameOver) {
-            _showGameOverDialog(context, state.gameState);
+          if (state.isGameOver && !_gameOverDialogShown) {
+            _gameOverDialogShown = true;
+            Future.delayed(const Duration(milliseconds: 1500), () {
+              if (mounted) _showGameOverDialog(context, state.gameState);
+            });
           }
         },
         builder: (context, state) {

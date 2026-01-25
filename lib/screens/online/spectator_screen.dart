@@ -110,7 +110,10 @@ class _SpectatorContentState extends State<_SpectatorContent> {
 
     if (gameState.isGameOver && !_gameOverDialogShown) {
       _gameOverDialogShown = true;
-      _handleGameOver(gameState);
+      // Delay before showing dialog to let spectators see the final board state
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) _handleGameOver(gameState);
+      });
     }
   }
 
@@ -256,7 +259,11 @@ class _SpectatorContentState extends State<_SpectatorContent> {
 
     final newState = _gameStateNotifier.value!.copyWith(result: gameResult);
     _gameStateNotifier.value = newState;
-    _showGameOverDialog(newState);
+    
+    // Delay before showing dialog
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) _showGameOverDialog(newState);
+    });
   }
 
   void _handleGameOver(GameState gameState) {
