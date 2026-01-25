@@ -88,7 +88,7 @@ class AppStrings {
   String get congratulations => _get('Congratulations!', 'សូមអបអរសាទរ!');
   String get opponentWins => _get('Your opponent wins.', 'គូប្រកួតឈ្នះ។');
   String get gameEndedInDraw => _get('The game ended in a draw.', 'ល្បែងស្មើគ្នា។');
-  String pointsAwarded(int points) => _get('+$points points!', '+$points ពិន្ទុ!');
+  String pointsAwarded(int points) => _get('+$points coins!', '+$points កាក់!');
 
   // Counting rules
   String get drawCountingLimit => _get('Draw - Counting Limit Reached', 'ស្មើ - ដល់កំណត់រាប់');
@@ -132,7 +132,7 @@ class AppStrings {
   // Player profile
   String get playerStats => _get('Player Stats', 'ស្ថិតិអ្នកលេង');
   String get username => _get('Username', 'ឈ្មោះ');
-  String get totalPoints => _get('Total Points', 'ពិន្ទុសរុប');
+  String get totalPoints => _get('Total Coins', 'កាក់សរុប');
   String get editProfile => _get('Edit Profile', 'កែប្រូហ្វាល');
   String get email => _get('Email', 'អ៊ីមែល');
   String get phoneNumber => _get('Phone Number', 'លេខទូរស័ព្ទ');

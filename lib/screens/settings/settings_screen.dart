@@ -86,7 +86,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildInfoTile(
                 icon: Icons.emoji_events,
                 title: appStrings.totalPoints,
-                subtitle: '🏆 ${_user?.points ?? 0} pts',
+                subtitle: '🏆 ${_user?.points ?? 0} coins',
               ),
               // ListTile(
               //   leading: const Icon(Icons.edit, color: AppColors.templeGold),

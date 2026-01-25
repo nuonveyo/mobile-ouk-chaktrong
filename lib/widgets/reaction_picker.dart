@@ -126,9 +126,9 @@ class ReactionPicker extends StatelessWidget {
 
     final points;
     if (reaction.point == 0) {
-      points = " (0pts)";
+      points = " (0coins)";
     } else {
-      points = " (-${reaction.point}pts)";
+      points = " (-${reaction.point}coins)";
     }
     return InkWell(
       onTap: () =>
