@@ -9,8 +9,7 @@ import '../../models/models.dart';
 import '../../logic/game_rules.dart';
 import '../../blocs/game/game_bloc.dart';
 import '../../game/chess_game.dart';
-import '../../widgets/player_info_card.dart';
-import '../../widgets/counting_widget.dart';
+import '../../widgets/widgets.dart';
 import '../../repositories/user_repository.dart';
 
 /// Game screen with Flame game widget and BLoC state management
@@ -59,6 +58,7 @@ class _GameScreenContentState extends State<_GameScreenContent> {
   ChessGame? _game;
   final GameRules _rules = const GameRules();
   GameState? _currentGameState; // Track Flame game's state for UI
+  bool _showWinAnimation = false;
 
   @override
   void initState() {
@@ -70,6 +70,7 @@ class _GameScreenContentState extends State<_GameScreenContent> {
 
   void _initGame() {
     _gameOverDialogShown = false;
+    _showWinAnimation = false;
     _game = ChessGame(
       gameMode: widget.gameMode,
       aiDifficulty: widget.aiDifficulty,
@@ -81,6 +82,11 @@ class _GameScreenContentState extends State<_GameScreenContent> {
         
         // Check if game ended due to counting limit or other draw/win
         if (gameState.isGameOver && mounted && !_gameOverDialogShown) {
+          if (gameState.result == GameResult.whiteWins || 
+              gameState.result == GameResult.goldWins) {
+            setState(() => _showWinAnimation = true);
+          }
+          
           _gameOverDialogShown = true;
           // Small delay to let user see the final board state
           Future.delayed(const Duration(milliseconds: 1500), () {
@@ -204,116 +210,98 @@ class _GameScreenContentState extends State<_GameScreenContent> {
           final gameState = flameState ?? state.gameState;
           
           return SafeArea(
-            child: Column(
+            child: Stack(
               children: [
-                // Opponent info (Gold player at top)
-                PlayerInfoCard(
-                  name: widget.gameMode == GameMode.vsAi
-                      ? 'AI (${_getDifficultyLabel()})'
-                      : 'Player 2',
-                  color: PlayerColor.gold,
-                  isCurrentTurn: gameState.currentTurn == PlayerColor.gold,
-                  isInCheck: gameState.isCheck && gameState.currentTurn == PlayerColor.gold,
-                  timeRemaining: gameState.goldTimeRemaining,
-                  capturedPieces: _getCapturedPieces(gameState, PlayerColor.white),
-                ),
-                
-                // Counting widget for Gold player
-                if (flameState != null)
-                  CountingWidget(
-                    gameState: flameState,
-                    playerColor: PlayerColor.gold,
-                    onStartBoardCounting: () => _startBoardCounting(PlayerColor.gold),
-                    onStartPieceCounting: () => _startPieceCounting(PlayerColor.gold),
-                    onStopCounting: _stopCounting,
-                    onDeclareDraw: _declareDraw,
-                  ),
-                
-                // Chess board with Flame
-                Expanded(
-                  child: Center(
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: Container(
-                        margin: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.4),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: _game != null 
-                              ? GameWidget(game: _game!)
-                              : const Center(
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.templeGold,
-                                  ),
+                Column(
+                  children: [
+                    // Opponent info (Gold player at top)
+                    PlayerInfoCard(
+                      name: widget.gameMode == GameMode.vsAi
+                          ? 'AI (${_getDifficultyLabel()})'
+                          : 'Player 2',
+                      color: PlayerColor.gold,
+                      isCurrentTurn: gameState.currentTurn == PlayerColor.gold,
+                      isInCheck: gameState.isCheck && gameState.currentTurn == PlayerColor.gold,
+                      timeRemaining: gameState.goldTimeRemaining,
+                      capturedPieces: _getCapturedPieces(gameState, PlayerColor.white),
+                    ),
+                    
+                    // Counting widget for Gold player
+                    if (flameState != null)
+                      CountingWidget(
+                        gameState: flameState,
+                        playerColor: PlayerColor.gold,
+                        onStartBoardCounting: () => _startBoardCounting(PlayerColor.gold),
+                        onStartPieceCounting: () => _startPieceCounting(PlayerColor.gold),
+                        onStopCounting: _stopCounting,
+                        onDeclareDraw: _declareDraw,
+                      ),
+                    
+                    // Chess board with Flame
+                    Expanded(
+                      child: Center(
+                        child: AspectRatio(
+                          aspectRatio: 1,
+                          child: Container(
+                            margin: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.4),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
                                 ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: _game != null 
+                                  ? GameWidget(game: _game!)
+                                  : const Center(
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.templeGold,
+                                      ),
+                                    ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
 
-                // Player info (White player at bottom)
-                PlayerInfoCard(
-                  name: 'You',
-                  color: PlayerColor.white,
-                  isCurrentTurn: gameState.currentTurn == PlayerColor.white,
-                  isInCheck: gameState.isCheck && gameState.currentTurn == PlayerColor.white,
-                  timeRemaining: gameState.whiteTimeRemaining,
-                  capturedPieces: _getCapturedPieces(gameState, PlayerColor.gold),
+                    // Player info (White player at bottom)
+                    PlayerInfoCard(
+                      name: 'You',
+                      color: PlayerColor.white,
+                      isCurrentTurn: gameState.currentTurn == PlayerColor.white,
+                      isInCheck: gameState.isCheck && gameState.currentTurn == PlayerColor.white,
+                      timeRemaining: gameState.whiteTimeRemaining,
+                      capturedPieces: _getCapturedPieces(gameState, PlayerColor.gold),
+                    ),
+                    
+                    // Counting widget for White (human player)
+                    if (flameState != null)
+                      CountingWidget(
+                        gameState: flameState,
+                        playerColor: PlayerColor.white,
+                        onStartBoardCounting: () => _startBoardCounting(PlayerColor.white),
+                        onStartPieceCounting: () => _startPieceCounting(PlayerColor.white),
+                        onStopCounting: _stopCounting,
+                        onDeclareDraw: _declareDraw,
+                      ),
+                    
+                    // Action buttons
+                    // ...
+                  ],
                 ),
                 
-                // Counting widget for White (human player)
-                if (flameState != null)
-                  CountingWidget(
-                    gameState: flameState,
-                    playerColor: PlayerColor.white,
-                    onStartBoardCounting: () => _startBoardCounting(PlayerColor.white),
-                    onStartPieceCounting: () => _startPieceCounting(PlayerColor.white),
-                    onStopCounting: _stopCounting,
-                    onDeclareDraw: _declareDraw,
-                  ),
-                
-                // Action buttons
-                // Padding(
-                //   padding: const EdgeInsets.all(16),
-                //   child: Row(
-                //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                //     children: [
-                //       _buildActionButton(
-                //         Icons.undo,
-                //         'Undo',
-                //         gameState.moveHistory.isNotEmpty,
-                //         () => _game?.undoMove(),
-                //       ),
-                //       _buildActionButton(
-                //         Icons.flag_outlined,
-                //         'Resign',
-                //         !gameState.isGameOver,
-                //         () => _confirmResign(context),
-                //       ),
-                //       _buildActionButton(
-                //         Icons.handshake_outlined,
-                //         'Draw',
-                //         !gameState.isGameOver && widget.gameMode != GameMode.vsAi,
-                //         () => _offerDraw(context),
-                //       ),
-                //     ],
-                //   ),
-                // ),
+                // Win Animation Overlay
+                if (_showWinAnimation)
+                  const Positioned.fill(child: WinAnimation()),
               ],
             ),
           );
-        },
-      ),
-    );
+      },
+    ));
   }
 
   String _getGameModeTitle() {

@@ -19,6 +19,7 @@ import '../../widgets/reaction_display.dart';
 import '../../widgets/reaction_picker.dart';
 import '../../services/sound_service.dart';
 import '../../services/vibration_service.dart';
+import '../../widgets/win_animation.dart';
 
 /// Screen for online multiplayer game
 class OnlineGameScreen extends StatelessWidget {
@@ -66,6 +67,7 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
   PlayerColor? _localPlayerColor;
   bool _isGameInitialized = false;
   bool _gameOverDialogShown = false;
+  bool _showWinAnimation = false;
 
   @override
   void initState() {
@@ -289,6 +291,15 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
   }
 
   void _handleGameOver(GameState gameState) {
+    bool isWinner = (gameState.result == GameResult.whiteWins &&
+            _localPlayerColor == PlayerColor.white) ||
+        (gameState.result == GameResult.goldWins &&
+            _localPlayerColor == PlayerColor.gold);
+
+    if (isWinner) {
+      setState(() => _showWinAnimation = true);
+    }
+
     String result = gameState.result == GameResult.whiteWins
         ? 'white'
         : gameState.result == GameResult.goldWins
@@ -307,6 +318,13 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
         : result == 'gold'
         ? GameResult.goldWins
         : GameResult.draw;
+
+    if ((gameResult == GameResult.whiteWins &&
+            _localPlayerColor == PlayerColor.white) ||
+        (gameResult == GameResult.goldWins &&
+            _localPlayerColor == PlayerColor.gold)) {
+      setState(() => _showWinAnimation = true);
+    }
 
     final newState = _gameStateNotifier.value!.copyWith(result: gameResult);
     _gameStateNotifier.value = newState;
@@ -478,6 +496,10 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
             _buildCountingWidget(isOpponent: false),
           ],
         ),
+
+        // Global Win Animation Overlay
+        if (_showWinAnimation)
+          const Positioned.fill(child: WinAnimation()),
 
         // Reaction display overlay
         _buildReactionOverlay(),
