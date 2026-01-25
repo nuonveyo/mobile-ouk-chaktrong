@@ -123,6 +123,12 @@ class ChessGame extends FlameGame {
 
     // Initial piece setup
     _syncPiecesToBoard();
+
+    // Highlight king if in check
+    if (_gameState.isCheck) {
+      final kingPos = _gameState.board.findKing(_gameState.currentTurn);
+      _board.setCheckPosition(kingPos);
+    }
     
     // Start the timer
     _startTimer();

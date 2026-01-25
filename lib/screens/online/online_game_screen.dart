@@ -708,7 +708,15 @@ class OnlineChessGame extends FlameGame {
     _gameState = _rules.applyMove(_gameState, move);
     _board.animateMove(move);
     _board.setLastMove(move.from, move.to);
-    // Don't call syncPieces - animateMove already handles piece updates smoothly
+    
+    // Highlight king if in check
+    if (_gameState.isCheck) {
+      final kingPos = _gameState.board.findKing(_gameState.currentTurn);
+      _board.setCheckPosition(kingPos);
+    } else {
+      _board.setCheckPosition(null);
+    }
+
     onGameStateChanged?.call(_gameState);
   }
 
@@ -729,6 +737,12 @@ class OnlineChessGame extends FlameGame {
 
     add(_board);
     _board.syncPieces(_gameState.board);
+
+    // Highlight king if in check
+    if (_gameState.isCheck) {
+      final kingPos = _gameState.board.findKing(_gameState.currentTurn);
+      _board.setCheckPosition(kingPos);
+    }
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!_gameState.isGameOver) {
@@ -793,6 +807,14 @@ class OnlineChessGame extends FlameGame {
     _clearSelection();
     _board.animateMove(move);
     _board.setLastMove(move.from, move.to);
+
+    // Highlight king if in check
+    if (_gameState.isCheck) {
+      final kingPos = _gameState.board.findKing(_gameState.currentTurn);
+      _board.setCheckPosition(kingPos);
+    } else {
+      _board.setCheckPosition(null);
+    }
 
     onMoveMade?.call(move, newState);
     onGameStateChanged?.call(_gameState);

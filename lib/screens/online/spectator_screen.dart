@@ -515,6 +515,12 @@ class SpectatorChessGame extends FlameGame {
 
     add(_board);
     _board.syncPieces(_gameState.board);
+
+    // Highlight king if in check
+    if (_gameState.isCheck) {
+      final kingPos = _gameState.board.findKing(_gameState.currentTurn);
+      _board.setCheckPosition(kingPos);
+    }
   }
 
   @override
@@ -535,6 +541,15 @@ class SpectatorChessGame extends FlameGame {
   void applyRemoteMove(Move move) {
     _gameState = _rules.applyMove(_gameState, move);
     _board.syncPieces(_gameState.board);
+    
+    // Highlight king if in check
+    if (_gameState.isCheck) {
+      final kingPos = _gameState.board.findKing(_gameState.currentTurn);
+      _board.setCheckPosition(kingPos);
+    } else {
+      _board.setCheckPosition(null);
+    }
+
     onGameStateChanged(_gameState);
   }
 }
