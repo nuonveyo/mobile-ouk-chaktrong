@@ -143,6 +143,16 @@ class _LobbyScreenContent extends StatelessWidget {
                     isSelected: selectedTime == 900,
                     onTap: () => setState(() => selectedTime = 900),
                   ),
+                  _TimeChip(
+                    label: '20 min',
+                    isSelected: selectedTime == 1200,
+                    onTap: () => setState(() => selectedTime = 1200),
+                  ),
+                  _TimeChip(
+                    label: '30 min',
+                    isSelected: selectedTime == 1800,
+                    onTap: () => setState(() => selectedTime = 1800),
+                  ),
                 ],
               ),
             ],
