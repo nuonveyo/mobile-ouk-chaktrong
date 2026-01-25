@@ -102,6 +102,7 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
     _game = OnlineChessGame(
       initialState: initialState,
       localPlayerColor: _localPlayerColor!,
+      isSpectating: context.read<OnlineGameBloc>().state.isSpectating,
       onMoveMade: _onLocalMoveMade,
       onGameStateChanged: _onGameStateChanged,
     );
@@ -557,12 +558,14 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
                   name: '$localName (You)',
                   points: state.points,
                   color: _localPlayerColor!,
-                  showReaction: true,
-                  onReactionClick: () => ReactionPicker.show(
-                    context,
-                    currentPoint: state.points,
-                    onReactionSelected: _sendReaction,
-                  ),
+                  showReaction: !state.isSpectating, // Only show for players
+                  onReactionClick: state.isSpectating 
+                    ? null 
+                    : () => ReactionPicker.show(
+                        context,
+                        currentPoint: state.points,
+                        onReactionSelected: _sendReaction,
+                      ),
                   isCurrentTurn: gameState.currentTurn == _localPlayerColor,
                   isInCheck:
                       gameState.isCheck &&
@@ -591,17 +594,20 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
       valueListenable: _gameStateNotifier,
       builder: (context, gameState, _) {
         if (gameState == null) return const SizedBox.shrink();
+        
+        final isSpectating = context.read<OnlineGameBloc>().state.isSpectating;
+        
         return CountingWidget(
           gameState: gameState,
           playerColor: playerColor,
-          onStartBoardCounting: isOpponent
+          onStartBoardCounting: (isOpponent || isSpectating)
               ? null
               : () => _startBoardCounting(playerColor),
-          onStartPieceCounting: isOpponent
+          onStartPieceCounting: (isOpponent || isSpectating)
               ? null
               : () => _startPieceCounting(playerColor),
-          onStopCounting: isOpponent ? null : _stopCounting,
-          onDeclareDraw: isOpponent ? null : _declareDraw,
+          onStopCounting: (isOpponent || isSpectating) ? null : _stopCounting,
+          onDeclareDraw: (isOpponent || isSpectating) ? null : _declareDraw,
         );
       },
     );
@@ -670,6 +676,7 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
 class OnlineChessGame extends FlameGame {
   final GameState initialState;
   final PlayerColor localPlayerColor;
+  final bool isSpectating;
   final void Function(Move move, GameState newState)? onMoveMade;
   final void Function(GameState)? onGameStateChanged;
 
@@ -685,6 +692,7 @@ class OnlineChessGame extends FlameGame {
   OnlineChessGame({
     required this.initialState,
     required this.localPlayerColor,
+    this.isSpectating = false,
     this.onMoveMade,
     this.onGameStateChanged,
   }) : _gameState = initialState;
@@ -737,6 +745,7 @@ class OnlineChessGame extends FlameGame {
   }
 
   void _onSquareTapped(Position position) {
+    if (isSpectating) return; // Block all interaction for spectators
     if (_gameState.currentTurn != localPlayerColor) return;
 
     final piece = _gameState.board.getPiece(position);

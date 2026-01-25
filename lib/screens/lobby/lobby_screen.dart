@@ -58,8 +58,8 @@ class _LobbyScreenContent extends StatelessWidget {
             );
           }
           
-          // Navigate to game when it starts
-          if (state.isGameStarted && state.currentRoom != null) {
+          // Navigate to game when it starts (only for players, spectators stay in SpectatorScreen)
+          if (state.isGameStarted && state.currentRoom != null && !state.isSpectating) {
             context.go('/online-game/${state.currentRoom!.id}');
           }
         },

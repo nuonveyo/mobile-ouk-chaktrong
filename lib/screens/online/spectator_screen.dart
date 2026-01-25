@@ -4,6 +4,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ouk_chaktrong/widgets/counting_widget.dart';
 
 import '../../blocs/online/online_game_bloc.dart';
 import '../../core/constants/app_colors.dart';
@@ -14,6 +15,7 @@ import '../../logic/logic.dart';
 import '../../models/models.dart';
 import '../../repositories/repositories.dart';
 import '../../widgets/player_info_card.dart';
+import '../../widgets/reaction_display.dart';
 
 /// Screen for spectating an online game (read-only)
 class SpectatorScreen extends StatelessWidget {
@@ -49,8 +51,10 @@ class _SpectatorContentState extends State<_SpectatorContent> {
   OnlineGameRepository? _repository;
 
   final ValueNotifier<GameState?> _gameStateNotifier = ValueNotifier(null);
+  final ValueNotifier<int?> _reactionNotifier = ValueNotifier(null);
   
   OnlineGameRoom? _room;
+  int? _lastReactionTimestamp; // To prevent showing same reaction twice
   bool _isGameInitialized = false;
   bool _gameOverDialogShown = false;
 
@@ -64,6 +68,7 @@ class _SpectatorContentState extends State<_SpectatorContent> {
   void dispose() {
     _roomSubscription?.cancel();
     _gameStateNotifier.dispose();
+    _reactionNotifier.dispose();
     // Leave spectating when closing
     if (mounted) {
       context.read<OnlineGameBloc>().add(const LeaveSpectatingRequested());
@@ -222,6 +227,18 @@ class _SpectatorContentState extends State<_SpectatorContent> {
         if (room.isFinished && room.gameData?.result != null && !_gameOverDialogShown) {
           _handleRemoteGameEnd(room.gameData!.result!);
         }
+
+        // Handle incoming reactions from players
+        if (room.latestReactionCode != null &&
+            room.latestReactionSender != null) {
+          final reactionKey =
+              room.latestReactionCode.hashCode ^
+              room.latestReactionSender.hashCode;
+          if (_lastReactionTimestamp != reactionKey) {
+            _lastReactionTimestamp = reactionKey;
+            _reactionNotifier.value = room.latestReactionCode;
+          }
+        }
       }
     });
   }
@@ -361,57 +378,107 @@ class _SpectatorContentState extends State<_SpectatorContent> {
             ],
           ),
           body: SafeArea(
-            child: ValueListenableBuilder<GameState?>(
-              valueListenable: _gameStateNotifier,
-              builder: (context, gameState, _) {
-                if (gameState == null) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppColors.templeGold),
-                  );
-                }
+            child: Stack(
+              children: [
+                ValueListenableBuilder<GameState?>(
+                  valueListenable: _gameStateNotifier,
+                  builder: (context, gameState, _) {
+                    if (gameState == null) {
+                      return const Center(
+                        child: CircularProgressIndicator(color: AppColors.templeGold),
+                      );
+                    }
 
-                return Column(
-                  children: [
-                    // Gold player info (top)
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: PlayerInfoCard(
-                        name: _room?.guestPlayerName ?? 'Gold',
-                        color: PlayerColor.gold,
-                        isCurrentTurn: gameState.currentTurn == PlayerColor.gold,
-                        isInCheck: gameState.isCheck && gameState.currentTurn == PlayerColor.gold,
-                        timeRemaining: gameState.goldTimeRemaining,
-                      ),
-                    ),
+                    return Column(
+                      children: [
+                        // Gold player info (top)
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: PlayerInfoCard(
+                            name: _room?.guestPlayerName ?? 'Gold',
+                            color: PlayerColor.gold,
+                            isCurrentTurn: gameState.currentTurn == PlayerColor.gold,
+                            isInCheck: gameState.isCheck && gameState.currentTurn == PlayerColor.gold,
+                            timeRemaining: gameState.goldTimeRemaining,
+                            showReaction: false, // Spectators can't send reactions
+                          ),
+                        ),
 
-                    // Game board (read-only)
-                    Expanded(
+                        // Gold counting widget (read-only for spectators)
+                        _buildSpectatorCountingWidget(gameState, PlayerColor.gold),
+
+                        // Game board (read-only)
+                        Expanded(
+                          child: Center(
+                            child: AspectRatio(
+                              aspectRatio: 1,
+                              child: GameWidget(game: _game!),
+                            ),
+                          ),
+                        ),
+
+                        // White player info (bottom)
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: PlayerInfoCard(
+                            name: _room?.hostPlayerName ?? 'White',
+                            color: PlayerColor.white,
+                            isCurrentTurn: gameState.currentTurn == PlayerColor.white,
+                            isInCheck: gameState.isCheck && gameState.currentTurn == PlayerColor.white,
+                            timeRemaining: gameState.whiteTimeRemaining,
+                            showReaction: false, // Spectators can't send reactions
+                          ),
+                        ),
+
+                        // White counting widget (read-only for spectators)
+                        _buildSpectatorCountingWidget(gameState, PlayerColor.white),
+                      ],
+                    );
+                  },
+                ),
+                
+                // Reaction display overlay
+                ValueListenableBuilder<int?>(
+                  valueListenable: _reactionNotifier,
+                  builder: (context, reactionCode, _) {
+                    if (reactionCode == null) return const SizedBox.shrink();
+
+                    final isFromWhite = _room?.hostPlayerId == _room?.latestReactionSender;
+
+                    return Positioned(
+                      top: isFromWhite ? null : 100, // Top for gold, bottom for white
+                      bottom: isFromWhite ? 100 : null,
+                      left: 0,
+                      right: 0,
                       child: Center(
-                        child: AspectRatio(
-                          aspectRatio: 1,
-                          child: GameWidget(game: _game!),
+                        child: ReactionDisplay(
+                          reactionCode: reactionCode,
+                          isFromOpponent: false, // In spectator view, we just show it
+                          onDismissed: () {
+                            _reactionNotifier.value = null;
+                          },
                         ),
                       ),
-                    ),
-
-                    // White player info (bottom)
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: PlayerInfoCard(
-                        name: _room?.hostPlayerName ?? 'White',
-                        color: PlayerColor.white,
-                        isCurrentTurn: gameState.currentTurn == PlayerColor.white,
-                        isInCheck: gameState.isCheck && gameState.currentTurn == PlayerColor.white,
-                        timeRemaining: gameState.whiteTimeRemaining,
-                      ),
-                    ),
-                  ],
-                );
-              },
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSpectatorCountingWidget(GameState gameState, PlayerColor playerColor) {
+    return CountingWidget(
+      gameState: gameState,
+      playerColor: playerColor,
+      // Pass null for all callbacks to disable interaction for spectators
+      onStartBoardCounting: null,
+      onStartPieceCounting: null,
+      onStopCounting: null,
+      onDeclareDraw: null,
     );
   }
 }

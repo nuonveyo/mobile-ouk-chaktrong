@@ -120,15 +120,16 @@ class CountingWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 12),
-          // Stop button
-          ElevatedButton(
-            onPressed: onStopCounting,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          // Stop button (only if callback provided)
+          if (onStopCounting != null)
+            ElevatedButton(
+              onPressed: onStopCounting,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              child: const Text('Stop'),
             ),
-            child: const Text('Stop'),
-          ),
         ],
       ),
     );
@@ -142,8 +143,8 @@ class CountingWidget extends StatelessWidget {
         icon: const Icon(Icons.handshake),
         label: const Text('Declare Draw'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.warning,
-          foregroundColor: AppColors.deepPurple,
+          backgroundColor: onDeclareDraw == null ? AppColors.surface : AppColors.warning,
+          foregroundColor: onDeclareDraw == null ? AppColors.textMuted : AppColors.deepPurple,
           minimumSize: const Size(double.infinity, 44),
         ),
       ),
@@ -161,11 +162,20 @@ class CountingWidget extends StatelessWidget {
           backgroundColor: AppColors.surface,
           minimumSize: const Size(double.infinity, 44),
         ),
-        child: const Column(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Start Counting', style: TextStyle(fontSize: 14)),
-            Text("Board's Honor (64 moves)", style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+            Text(
+              'Start Counting',
+              style: TextStyle(
+                fontSize: 14,
+                color: onStartBoardCounting == null ? AppColors.textMuted : AppColors.textPrimary,
+              ),
+            ),
+            const Text(
+              "Board's Honor (64 moves)",
+              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+            ),
           ],
         ),
       ),
