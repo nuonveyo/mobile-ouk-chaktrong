@@ -137,7 +137,7 @@ class PlayerInfoCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 if (points != null)
                   Text(
-                    '🏆 ${points ?? 0} pts',
+                    '🏆 ${points ?? 0} coins',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
