@@ -284,19 +284,22 @@ class _SpectatorContentState extends State<_SpectatorContent> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(title, style: const TextStyle(color: AppColors.templeGold)),
-        content: Text(message, style: const TextStyle(color: AppColors.textPrimary)),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              context.go('/lobby');
-            },
-            child: Text(appStrings.backToLobby),
-          ),
-        ],
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(title, style: const TextStyle(color: AppColors.templeGold)),
+          content: Text(message, style: const TextStyle(color: AppColors.textPrimary)),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                context.go('/lobby');
+              },
+              child: Text(appStrings.backToLobby),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -304,22 +307,25 @@ class _SpectatorContentState extends State<_SpectatorContent> {
   void _showLeaveDialog() {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(appStrings.leaveGame, style: const TextStyle(color: AppColors.textPrimary)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(appStrings.stay),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.go('/lobby');
-            },
-            child: Text(appStrings.leave),
-          ),
-        ],
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(appStrings.leaveGame, style: const TextStyle(color: AppColors.textPrimary)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(appStrings.stay),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                context.go('/lobby');
+              },
+              child: Text(appStrings.leave),
+            ),
+          ],
+        ),
       ),
     );
   }

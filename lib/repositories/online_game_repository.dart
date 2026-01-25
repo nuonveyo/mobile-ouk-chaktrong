@@ -152,7 +152,7 @@ class OnlineGameRepository {
   }
 
   /// Leave/cancel a game room
-  Future<void> leaveRoom(String roomId) async {
+  Future<void> leaveRoom(String roomId, String userId) async {
     final docRef = _gamesRef.doc(roomId);
     final snapshot = await docRef.get();
     
@@ -161,10 +161,12 @@ class OnlineGameRepository {
       if (room.isWaiting) {
         // Delete if still waiting
         await docRef.delete();
-      } else {
-        // Mark as finished if playing
+      } else if (room.isPlaying) {
+        // Mark as finished if playing and set winner as the person who didn't leave
+        final winner = room.hostPlayerId == userId ? 'gold' : 'white';
         await docRef.update({
           'status': GameStatus.finished.name,
+          'gameData.result': winner,
         });
       }
     }

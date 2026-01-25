@@ -337,25 +337,28 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(title, style: const TextStyle(color: AppColors.templeGold)),
-        content: Text(
-          message,
-          style: const TextStyle(color: AppColors.textPrimary),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(ctx).pop(); // Close dialog
-              context.go('/lobby'); // Navigate back to lobby using GoRouter
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.templeGold,
-            ),
-            child: Text(appStrings.backToLobby),
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(title, style: const TextStyle(color: AppColors.templeGold)),
+          content: Text(
+            message,
+            style: const TextStyle(color: AppColors.textPrimary),
           ),
-        ],
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(ctx).pop(); // Close dialog
+                context.go('/lobby'); // Navigate back to lobby using GoRouter
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.templeGold,
+              ),
+              child: Text(appStrings.backToLobby),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -616,31 +619,34 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
   void _showLeaveConfirmation(BuildContext context) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(
-          appStrings.leaveGame,
-          style: const TextStyle(color: AppColors.textPrimary),
-        ),
-        content: Text(
-          appStrings.ifYouLeaveForfeit,
-          style: const TextStyle(color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(appStrings.stay),
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(
+            appStrings.leaveGame,
+            style: const TextStyle(color: AppColors.textPrimary),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(ctx).pop(); // Close dialog
-              context.read<OnlineGameBloc>().add(const LeaveRoomRequested());
-              context.go('/lobby'); // Navigate back to lobby using GoRouter
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-            child: Text(appStrings.leave),
+          content: Text(
+            appStrings.ifYouLeaveForfeit,
+            style: const TextStyle(color: AppColors.textSecondary),
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(appStrings.stay),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(ctx).pop(); // Close dialog
+                context.read<OnlineGameBloc>().add(const LeaveRoomRequested());
+                context.go('/lobby'); // Navigate back to lobby using GoRouter
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+              child: Text(appStrings.leave),
+            ),
+          ],
+        ),
       ),
     );
   }

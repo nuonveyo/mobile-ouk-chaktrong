@@ -207,8 +207,8 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     LeaveRoomRequested event,
     Emitter<OnlineGameBlocState> emit,
   ) async {
-    if (state.currentRoom != null) {
-      await _gameRepository.leaveRoom(state.currentRoom!.id);
+    if (state.currentRoom != null && state.playerId != null) {
+      await _gameRepository.leaveRoom(state.currentRoom!.id, state.playerId!);
     }
 
     _roomSubscription?.cancel();
