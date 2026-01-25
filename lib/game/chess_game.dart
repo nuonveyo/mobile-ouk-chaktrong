@@ -213,8 +213,11 @@ class ChessGame extends FlameGame {
 
     // Play check sound/vibration if in check
     if (_gameState.isCheck) {
-      SoundService().playCheck();
-      VibrationService().vibrateCheck();
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (!isMounted) return;
+        SoundService().playCheck();
+        VibrationService().vibrateCheck();
+      });
     }
 
     // Clear selection

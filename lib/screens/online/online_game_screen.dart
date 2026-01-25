@@ -17,6 +17,8 @@ import '../../widgets/counting_widget.dart';
 import '../../widgets/player_info_card.dart';
 import '../../widgets/reaction_display.dart';
 import '../../widgets/reaction_picker.dart';
+import '../../services/sound_service.dart';
+import '../../services/vibration_service.dart';
 
 /// Screen for online multiplayer game
 class OnlineGameScreen extends StatelessWidget {
@@ -711,12 +713,25 @@ class OnlineChessGame extends FlameGame {
   }
 
   void applyRemoteMove(Move move) {
+    // Play appropriate sound and vibration
+    if (move.isCapture) {
+      SoundService().playCapture();
+      VibrationService().vibrateCapture();
+    } else {
+      SoundService().playMove();
+      VibrationService().vibrateMove();
+    }
+
     _gameState = _rules.applyMove(_gameState, move);
     _board.animateMove(move);
     _board.setLastMove(move.from, move.to);
     
     // Highlight king if in check
     if (_gameState.isCheck) {
+      Future.delayed(const Duration(milliseconds: 150), () {
+        SoundService().playCheck();
+        VibrationService().vibrateCheck();
+      });
       final kingPos = _gameState.board.findKing(_gameState.currentTurn);
       _board.setCheckPosition(kingPos);
     } else {
@@ -807,6 +822,15 @@ class OnlineChessGame extends FlameGame {
   }
 
   void _executeMove(Move move) {
+    // Play appropriate sound and vibration
+    if (move.isCapture) {
+      SoundService().playCapture();
+      VibrationService().vibrateCapture();
+    } else {
+      SoundService().playMove();
+      VibrationService().vibrateMove();
+    }
+
     final newState = _rules.applyMove(_gameState, move);
     _gameState = newState;
 
@@ -816,6 +840,10 @@ class OnlineChessGame extends FlameGame {
 
     // Highlight king if in check
     if (_gameState.isCheck) {
+      Future.delayed(const Duration(milliseconds: 150), () {
+        SoundService().playCheck();
+        VibrationService().vibrateCheck();
+      });
       final kingPos = _gameState.board.findKing(_gameState.currentTurn);
       _board.setCheckPosition(kingPos);
     } else {

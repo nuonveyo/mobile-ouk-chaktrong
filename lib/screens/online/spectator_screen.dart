@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ouk_chaktrong/widgets/counting_widget.dart';
+import 'package:ouk_chaktrong/widgets/player_info_card.dart';
 
 import '../../blocs/online/online_game_bloc.dart';
 import '../../core/constants/app_colors.dart';
@@ -14,8 +15,9 @@ import '../../game/components/board_component.dart';
 import '../../logic/logic.dart';
 import '../../models/models.dart';
 import '../../repositories/repositories.dart';
-import '../../widgets/player_info_card.dart';
 import '../../widgets/reaction_display.dart';
+import '../../services/sound_service.dart';
+import '../../services/vibration_service.dart';
 
 /// Screen for spectating an online game (read-only)
 class SpectatorScreen extends StatelessWidget {
@@ -545,12 +547,25 @@ class SpectatorChessGame extends FlameGame {
 
   /// Apply a move received from the server
   void applyRemoteMove(Move move) {
+    // Play appropriate sound and vibration
+    if (move.isCapture) {
+      SoundService().playCapture();
+      VibrationService().vibrateCapture();
+    } else {
+      SoundService().playMove();
+      VibrationService().vibrateMove();
+    }
+
     _gameState = _rules.applyMove(_gameState, move);
     _board.animateMove(move);
     _board.setLastMove(move.from, move.to);
     
     // Highlight king if in check
     if (_gameState.isCheck) {
+      Future.delayed(const Duration(milliseconds: 150), () {
+        SoundService().playCheck();
+        VibrationService().vibrateCheck();
+      });
       final kingPos = _gameState.board.findKing(_gameState.currentTurn);
       _board.setCheckPosition(kingPos);
     } else {
