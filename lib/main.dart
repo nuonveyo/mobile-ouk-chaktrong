@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'app.dart';
 import 'services/sound_service.dart';
+import 'services/remote_config_service.dart';
 import 'core/localization/app_strings.dart';
 
 void main() async {
@@ -19,6 +20,9 @@ void main() async {
   
   // Initialize sound service
   await SoundService().init();
+  
+  // Initialize remote config
+  await RemoteConfigService().init();
   
   // Set preferred orientations (portrait only for better gameplay)
   await SystemChrome.setPreferredOrientations([

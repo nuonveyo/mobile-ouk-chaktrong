@@ -1,14 +1,81 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../services/remote_config_service.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/game_constants.dart';
 import '../../core/localization/app_strings.dart';
 import '../../app.dart';
 
 /// Home screen with game mode selection
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkUpdate();
+  }
+
+  Future<void> _checkUpdate() async {
+    // Small delay to ensure the UI is ready
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+
+    final config = await RemoteConfigService().checkUpdate();
+    if (config != null && mounted) {
+      _showUpdateDialog(config);
+    }
+  }
+
+  void _showUpdateDialog(UpdateConfig config) {
+    final String currentLocale = BlocProvider.of<OutChaktrongAppBloc>(context).state.local;
+    
+    showDialog(
+      context: context,
+      barrierDismissible: !config.mandatory,
+      builder: (context) => PopScope(
+        canPop: !config.mandatory,
+        child: AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(
+            config.getLocalizedTitle(currentLocale),
+            style: const TextStyle(color: AppColors.templeGold, fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            config.getLocalizedMessage(currentLocale),
+            style: const TextStyle(color: AppColors.textPrimary),
+          ),
+          actions: [
+            if (!config.mandatory)
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(appStrings.cancel),
+              ),
+            ElevatedButton(
+              onPressed: () async {
+                final Uri url = Uri.parse(config.storeUrl);
+                if (await canLaunchUrl(url)) {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.templeGold,
+                foregroundColor: AppColors.deepPurple,
+              ),
+              child: const Text('UPDATE NOW'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
