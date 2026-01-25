@@ -2,6 +2,8 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ouk_chaktrong/services/sound_service.dart';
+import 'package:ouk_chaktrong/services/vibration_service.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/game_constants.dart';
 import '../../core/localization/app_strings.dart';
@@ -88,6 +90,11 @@ class _GameScreenContentState extends State<_GameScreenContent> {
           }
           
           _gameOverDialogShown = true;
+          
+          // Play game over sound and vibration
+          SoundService().playGameOver();
+          VibrationService().vibrateGameOver();
+
           // Small delay to let user see the final board state
           Future.delayed(const Duration(milliseconds: 1500), () {
             if (mounted) _showGameOverDialog(context, gameState);
@@ -199,6 +206,11 @@ class _GameScreenContentState extends State<_GameScreenContent> {
         listener: (context, state) {
           if (state.isGameOver && !_gameOverDialogShown) {
             _gameOverDialogShown = true;
+            
+            // Play game over sound and vibration
+            SoundService().playGameOver();
+            VibrationService().vibrateGameOver();
+
             Future.delayed(const Duration(milliseconds: 1500), () {
               if (mounted) _showGameOverDialog(context, state.gameState);
             });

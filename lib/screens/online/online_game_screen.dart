@@ -127,6 +127,11 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
 
     if (gameState.isGameOver && !_gameOverDialogShown) {
       _gameOverDialogShown = true;
+
+      // Play game over sound and vibration
+      SoundService().playGameOver();
+      VibrationService().vibrateGameOver();
+
       // Small delay before showing dialog to let user see the final board state
       Future.delayed(const Duration(milliseconds: 1500), () {
         if (mounted) _handleGameOver(gameState);
@@ -329,6 +334,10 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
     final newState = _gameStateNotifier.value!.copyWith(result: gameResult);
     _gameStateNotifier.value = newState;
     
+    // Play game over sound and vibration
+    SoundService().playGameOver();
+    VibrationService().vibrateGameOver();
+
     // Small delay before showing dialog
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) _showGameOverDialog(newState);
