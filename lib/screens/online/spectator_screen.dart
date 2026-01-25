@@ -540,7 +540,8 @@ class SpectatorChessGame extends FlameGame {
   /// Apply a move received from the server
   void applyRemoteMove(Move move) {
     _gameState = _rules.applyMove(_gameState, move);
-    _board.syncPieces(_gameState.board);
+    _board.animateMove(move);
+    _board.setLastMove(move.from, move.to);
     
     // Highlight king if in check
     if (_gameState.isCheck) {
