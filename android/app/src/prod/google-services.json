@@ -26,28 +26,9 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:538906927996:android:ba0f82b85451d325f5faf9",
+        "mobilesdk_app_id": "1:538906927996:android:de563aadcf420038f5faf9",
         "android_client_info": {
-          "package_name": "com.oukchaktrong.ouk_chaktrong"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyB2DFYbIJI8ivd5RyJPf3F1xFwXsctSYRE"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:538906927996:android:e9669f8479854fbff5faf9",
-        "android_client_info": {
-          "package_name": "com.oukchaktrong.ouk_chaktrong.uat"
+          "package_name": "com.veyo.personalize.sdachouk"
         }
       },
       "oauth_client": [],

@@ -6,9 +6,12 @@ import 'core/localization/app_strings.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
+import 'core/config/env_config.dart';
+
 /// Main app widget
 class OukChaktrongApp extends StatelessWidget {
-  const OukChaktrongApp({super.key});
+  final EnvConfig config;
+  const OukChaktrongApp({super.key, required this.config});
 
   @override
   Widget build(BuildContext context) {
@@ -18,11 +21,22 @@ class OukChaktrongApp extends StatelessWidget {
         buildWhen: (previous, current) => previous.local != current.local,
         builder: (context, state) {
           return MaterialApp.router(
-            title: 'Ouk Chaktrong',
+            title: config.appName,
             locale: Locale(state.local),
-            debugShowCheckedModeBanner: false,
+            debugShowCheckedModeBanner: config.isUat,
             theme: AppTheme.darkTheme,
             routerConfig: AppRouter.router,
+            builder: (context, child) {
+              if (config.isUat) {
+                return Banner(
+                  message: "UAT",
+                  location: BannerLocation.topEnd,
+                  color: Colors.red,
+                  child: child!,
+                );
+              }
+              return child!;
+            },
           );
         },
       ),

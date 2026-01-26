@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'app.dart';
 import 'services/sound_service.dart';
 import 'services/remote_config_service.dart';
 import 'core/localization/app_strings.dart';
+import 'core/config/env_config.dart';
 
 void main() async {
+  // This can be the default entry point (e.g., Production)
+  // Or we can leave it empty and use main_prod.dart / main_uat.dart
+}
+
+Future<void> runner(EnvConfig config) async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Firebase
+  // Initialize Firebase with environment-specific options
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+    options: config.firebaseOptions,
   );
   
   // Initialize localization
@@ -40,5 +45,6 @@ void main() async {
     ),
   );
 
-  runApp(const OukChaktrongApp());
+  runApp(OukChaktrongApp(config: config));
 }
+

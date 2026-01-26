@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "169821367334",
+    "project_id": "personalize-uat",
+    "storage_bucket": "personalize-uat.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:169821367334:android:a7ce84ca9b3f4642af8ae7",
+        "android_client_info": {
+          "package_name": "com.veyo.personalize.sdachouk.uat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPFAox4Dh8F5WiqCCbD01IwysVSvwBAcY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

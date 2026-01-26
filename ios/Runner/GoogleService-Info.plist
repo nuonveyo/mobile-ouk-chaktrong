@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.oukchaktrong.oukChaktrong</string>
+	<string>com.veyo.personalize.sdachouk</string>
 	<key>PROJECT_ID</key>
 	<string>personalize-92b9a</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:538906927996:ios:0f3b3355f0a23637f5faf9</string>
+	<string>1:538906927996:ios:d032dca1f7ec9c2ff5faf9</string>
 </dict>
 </plist>

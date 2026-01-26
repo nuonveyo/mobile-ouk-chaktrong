@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -9,6 +12,21 @@ plugins {
 }
 
 android {
+    val keystorePropertiesFile = rootProject.file("key.properties")
+    // Initialize a new Properties() object called keystoreProperties.
+    val keystoreProperties = Properties()
+    // Load your keystore.properties file into the keystoreProperties object.
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+
+    signingConfigs {
+        create("config") {
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+        }
+    }
+
     namespace = "com.oukchaktrong.ouk_chaktrong"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
@@ -22,9 +40,31 @@ android {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
+    flavorDimensions += "default"
+    productFlavors {
+        create("prod") {
+            dimension = "default"
+            resValue(
+                type = "string",
+                name = "app_name",
+                value = "Sdach Ouk"
+            )
+        }
+
+        create("uat") {
+            dimension = "default"
+            resValue(
+                type = "string",
+                name = "app_name",
+                value = "Sdach Ouk UAT"
+            )
+            applicationIdSuffix = ".uat"
+        }
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.oukchaktrong.ouk_chaktrong"
+        applicationId = "com.veyo.personalize.sdachouk"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
