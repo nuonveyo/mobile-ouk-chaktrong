@@ -16,9 +16,17 @@ Future<void> runner(EnvConfig config) async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize Firebase with environment-specific options
-  await Firebase.initializeApp(
-    options: config.firebaseOptions,
-  );
+  // Wrap in try-catch to handle case where iOS native layer already initialized Firebase
+  try {
+    await Firebase.initializeApp(
+      options: config.firebaseOptions,
+    );
+  } on FirebaseException catch (e) {
+    if (e.code != 'duplicate-app') {
+      rethrow;
+    }
+    // Firebase already initialized by native iOS, continue normally
+  }
   
   // Initialize localization
   await appStrings.init();

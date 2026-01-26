@@ -1,0 +1,8 @@
+#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release-uat.xcconfig"
+#include? "Target Support Files/Pods-Runner/Pods-Runner.release-uat.xcconfig"
+#include "Generated.xcconfig"
+
+// UAT flavor settings
+FLUTTER_TARGET=lib/main_uat.dart
+PRODUCT_BUNDLE_IDENTIFIER=com.veyo.personalize.sdachouk.uat
+DISPLAY_NAME=Sdach Ouk UAT
