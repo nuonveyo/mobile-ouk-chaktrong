@@ -18,6 +18,7 @@ class NotificationService {
   // Callbacks for notification actions
   void Function(String roomId)? onJoinNowTapped;
   void Function(String roomId)? onCancelTapped;
+  void Function(String roomId, String guestName)? onForegroundJoinRequest;
 
   /// Get the FCM token for this device
   String? get fcmToken => _fcmToken;
@@ -88,12 +89,11 @@ class NotificationService {
   void _handleForegroundMessage(RemoteMessage message) {
     debugPrint('Received foreground message: ${message.data}');
     
-    // Show local notification for join request
+    // When in foreground, call the callback to show alert dialog
     if (message.data['type'] == 'join_request') {
-      _showJoinRequestNotification(
-        roomId: message.data['roomId'] ?? '',
-        guestName: message.data['guestName'] ?? 'Someone',
-      );
+      final roomId = message.data['roomId'] ?? '';
+      final guestName = message.data['guestName'] ?? 'Someone';
+      onForegroundJoinRequest?.call(roomId, guestName);
     }
   }
 

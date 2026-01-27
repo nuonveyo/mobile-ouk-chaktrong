@@ -207,20 +207,19 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     AcceptJoinRequestEvent event,
     Emitter<OnlineGameBlocState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true, clearError: true));
-
+    // Don't show loading - let the Firestore listener handle the state update
     try {
       final room = await _gameRepository.acceptJoinRequest(event.roomId);
 
       if (room != null) {
         // Clear pending room tracking - game is starting
         roomLifecycleService.setCurrentPendingRoom(null);
-        emit(state.copyWith(currentRoom: room, isLoading: false));
+        // Room update will come through Firestore listener
       } else {
-        emit(state.copyWith(isLoading: false, errorMessage: 'Failed to accept'));
+        emit(state.copyWith(errorMessage: 'Failed to accept'));
       }
     } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: 'Error: $e'));
+      emit(state.copyWith(errorMessage: 'Error: $e'));
     }
   }
 

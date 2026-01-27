@@ -56,7 +56,8 @@ class _LobbyScreenContent extends StatelessWidget {
         listenWhen: (previous, current) =>
             previous.isWaitingForOpponent != current.isWaitingForOpponent ||
             previous.isGameStarted != current.isGameStarted ||
-            previous.hasPendingJoinRequest != current.hasPendingJoinRequest ||
+            // Only listen when pendingJoin changes from false to true (to trigger auto-accept once)
+            (!previous.hasPendingJoinRequest && current.hasPendingJoinRequest) ||
             previous.isWaitingForJoinApproval != current.isWaitingForJoinApproval ||
             previous.currentRoom?.isCancelled != current.currentRoom?.isCancelled ||
             previous.errorMessage != current.errorMessage,
@@ -76,12 +77,11 @@ class _LobbyScreenContent extends StatelessWidget {
             context.go('/online-game/${state.currentRoom!.id}');
           }
           
-          // Show join request dialog when someone wants to join (host)
+          // AUTO-ACCEPT: When host is on waiting screen and someone requests to join
+          // Automatically accept without showing dialog (only triggered once due to listenWhen)
           if (state.hasPendingJoinRequest && state.currentRoom != null) {
-            _showJoinRequestDialog(
-              context,
-              state.currentRoom!.id,
-              state.currentRoom!.pendingGuestName ?? 'Someone',
+            context.read<OnlineGameBloc>().add(
+              AcceptJoinRequestEvent(state.currentRoom!.id),
             );
           }
           

@@ -94,6 +94,13 @@ class _OnlineGameContentState extends State<_OnlineGameContent> {
         ? PlayerColor.white
         : PlayerColor.gold;
 
+    // AUTO-ACCEPT: If host navigates to game screen while room is in pendingJoin,
+    // accept the join request to start the game (this updates Firestore so guest sees it)
+    final isHost = room.hostPlayerId == localPlayerId;
+    if (isHost && room.isPendingJoin) {
+      context.read<OnlineGameBloc>().add(AcceptJoinRequestEvent(room.id));
+    }
+
     GameState initialState = GameState.initial(timeControl: room.timeControl);
 
     if (room.gameData != null && room.gameData!.moves.isNotEmpty) {
