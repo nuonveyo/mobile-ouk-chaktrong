@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../repositories/repositories.dart';
+import '../../services/notification_service.dart';
+import '../../services/room_lifecycle_service.dart';
 import 'online_game_event.dart';
 import 'online_game_state.dart';
 
@@ -28,7 +30,10 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
        _userRepository = userRepository ?? UserRepository(),
        super(OnlineGameBlocState.initial()) {
     on<CreateRoomRequested>(_onCreateRoom);
-    on<JoinRoomRequested>(_onJoinRoom);
+    on<JoinRoomRequested>(_onJoinRoom); // Keep for backward compatibility
+    on<RequestJoinRoomEvent>(_onRequestJoinRoom);
+    on<AcceptJoinRequestEvent>(_onAcceptJoinRequest);
+    on<DeclineJoinRequestEvent>(_onDeclineJoinRequest);
     on<LeaveRoomRequested>(_onLeaveRoom);
     on<RoomUpdated>(_onRoomUpdated);
     on<OnlineMoveExecuted>(_onMoveExecuted);
@@ -106,11 +111,18 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
       final localUser = await _userRepository.getUser();
       final playerName = localUser.name;
 
+      // Get FCM token for push notifications
+      final fcmToken = notificationService.fcmToken;
+
       final room = await _gameRepository.createRoom(
         hostPlayerId: user.uid,
         hostPlayerName: playerName,
+        hostFcmToken: fcmToken,
         timeControl: event.timeControl,
       );
+
+      // Track pending room for lifecycle management
+      roomLifecycleService.setCurrentPendingRoom(room.id);
 
       emit(
         state.copyWith(
@@ -133,8 +145,18 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     }
   }
 
+  /// Legacy joinRoom - now uses requestJoinRoom for new flow
   Future<void> _onJoinRoom(
     JoinRoomRequested event,
+    Emitter<OnlineGameBlocState> emit,
+  ) async {
+    // Redirect to new requestJoinRoom flow
+    add(RequestJoinRoomEvent(event.roomId));
+  }
+
+  /// Request to join a room (new flow - host must approve)
+  Future<void> _onRequestJoinRoom(
+    RequestJoinRoomEvent event,
     Emitter<OnlineGameBlocState> emit,
   ) async {
     emit(state.copyWith(isLoading: true, clearError: true));
@@ -146,7 +168,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
       final localUser = await _userRepository.getUser();
       final playerName = localUser.name;
 
-      final room = await _gameRepository.joinRoom(
+      final room = await _gameRepository.requestJoinRoom(
         roomId: event.roomId,
         guestPlayerId: user.uid,
         guestPlayerName: playerName,
@@ -168,15 +190,58 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
         ),
       );
 
-      // Start listening to room updates
+      // Start listening to room updates (will detect when host accepts/declines)
       _startListeningToRoom(room.id);
     } catch (e) {
       emit(
         state.copyWith(
           isLoading: false,
-          errorMessage: 'Failed to join room: $e',
+          errorMessage: 'Failed to request join: $e',
         ),
       );
+    }
+  }
+
+  /// Host accepts a join request
+  Future<void> _onAcceptJoinRequest(
+    AcceptJoinRequestEvent event,
+    Emitter<OnlineGameBlocState> emit,
+  ) async {
+    emit(state.copyWith(isLoading: true, clearError: true));
+
+    try {
+      final room = await _gameRepository.acceptJoinRequest(event.roomId);
+
+      if (room != null) {
+        // Clear pending room tracking - game is starting
+        roomLifecycleService.setCurrentPendingRoom(null);
+        emit(state.copyWith(currentRoom: room, isLoading: false));
+      } else {
+        emit(state.copyWith(isLoading: false, errorMessage: 'Failed to accept'));
+      }
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: 'Error: $e'));
+    }
+  }
+
+  /// Host declines a join request (cancels room)
+  Future<void> _onDeclineJoinRequest(
+    DeclineJoinRequestEvent event,
+    Emitter<OnlineGameBlocState> emit,
+  ) async {
+    emit(state.copyWith(isLoading: true));
+
+    try {
+      await _gameRepository.declineJoinRequest(event.roomId);
+      
+      // Clear pending room tracking
+      roomLifecycleService.setCurrentPendingRoom(null);
+      
+      _roomSubscription?.cancel();
+      emit(state.copyWith(clearRoom: true, isLoading: false));
+      _startListeningToRooms();
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: 'Error: $e'));
     }
   }
 

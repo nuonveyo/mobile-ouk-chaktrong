@@ -36,9 +36,17 @@ class OnlineGameBlocState extends Equatable {
   /// Check if game has started
   bool get isGameStarted => currentRoom?.isPlaying == true;
 
-  /// Check if waiting for opponent
+  /// Check if waiting for opponent (host created room, waiting for join requests)
   bool get isWaitingForOpponent =>
       currentRoom != null && currentRoom!.isWaiting && isHost;
+
+  /// Check if waiting for host approval (guest requested join)
+  bool get isWaitingForJoinApproval =>
+      currentRoom != null && currentRoom!.isPendingJoin && !isHost;
+
+  /// Check if there's a pending join request (host needs to respond)
+  bool get hasPendingJoinRequest =>
+      currentRoom != null && currentRoom!.isPendingJoin && isHost;
 
   /// Get player color (host = white, guest = gold)
   String get playerColor => isHost ? 'white' : 'gold';

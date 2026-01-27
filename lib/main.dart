@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'app.dart';
 import 'services/sound_service.dart';
 import 'services/remote_config_service.dart';
+import 'services/notification_service.dart';
+import 'services/room_lifecycle_service.dart';
 import 'core/localization/app_strings.dart';
 import 'core/config/env_config.dart';
 
@@ -28,6 +31,9 @@ Future<void> runner(EnvConfig config) async {
     // Firebase already initialized by native iOS, continue normally
   }
   
+  // Set up background message handler for FCM
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  
   // Initialize localization
   await appStrings.init();
   
@@ -36,6 +42,12 @@ Future<void> runner(EnvConfig config) async {
   
   // Initialize remote config
   await RemoteConfigService().init();
+  
+  // Initialize FCM notification service
+  await notificationService.init();
+  
+  // Initialize room lifecycle service for cleanup
+  roomLifecycleService.init();
   
   // Set preferred orientations (portrait only for better gameplay)
   await SystemChrome.setPreferredOrientations([

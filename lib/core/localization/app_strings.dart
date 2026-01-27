@@ -203,6 +203,15 @@ class AppStrings {
   String get back => _get('Back', 'ត្រឡប់ក្រោយ');
   String get restart => _get('Restart', 'ចាប់ផ្តើមឡើងវិញ');
 
+  // Join request flow
+  String get joinRequest => _get('Join Request', 'សំណើចូលរួម');
+  String guestWantsToJoin(String name) => _get('$name wants to join your game', '$name ចង់ចូលរួមការប្រកួតរបស់អ្នក');
+  String get joinNow => _get('Join Now', 'ចូលរួមឥឡូវ');
+  String get roomCancelled => _get('Room was cancelled by host', 'បន្ទប់ត្រូវបានលុបចោល');
+  String get waitingForHostApproval => _get('Waiting for host approval...', 'កំពុងរង់ចាំការអនុម័ត...');
+  String get playerWantsToJoin => _get('wants to join!', 'ចង់ចូលរួម!');
+  String get accept => _get('Accept', 'ទទួល');
+
   // Helper to get string based on locale
   String _get(String en, String km) {
     return isKhmer ? km : en;

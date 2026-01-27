@@ -56,6 +56,9 @@ class _LobbyScreenContent extends StatelessWidget {
         listenWhen: (previous, current) =>
             previous.isWaitingForOpponent != current.isWaitingForOpponent ||
             previous.isGameStarted != current.isGameStarted ||
+            previous.hasPendingJoinRequest != current.hasPendingJoinRequest ||
+            previous.isWaitingForJoinApproval != current.isWaitingForJoinApproval ||
+            previous.currentRoom?.isCancelled != current.currentRoom?.isCancelled ||
             previous.errorMessage != current.errorMessage,
         listener: (context, state) {
           // Show error messages
@@ -72,6 +75,25 @@ class _LobbyScreenContent extends StatelessWidget {
           if (state.isGameStarted && state.currentRoom != null && !state.isSpectating) {
             context.go('/online-game/${state.currentRoom!.id}');
           }
+          
+          // Show join request dialog when someone wants to join (host)
+          if (state.hasPendingJoinRequest && state.currentRoom != null) {
+            _showJoinRequestDialog(
+              context,
+              state.currentRoom!.id,
+              state.currentRoom!.pendingGuestName ?? 'Someone',
+            );
+          }
+          
+          // Handle room cancelled (for guest waiting)
+          if (state.currentRoom?.isCancelled == true) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(appStrings.roomCancelled),
+                backgroundColor: AppColors.danger,
+              ),
+            );
+          }
         },
         builder: (context, state) {
           if (state.isLoading) {
@@ -80,9 +102,31 @@ class _LobbyScreenContent extends StatelessWidget {
             );
           }
 
-          // Show waiting screen if hosting a room
-          if (state.isWaitingForOpponent) {
+          // Show waiting screen if hosting a room (waiting or pending join)
+          if (state.isWaitingForOpponent || state.hasPendingJoinRequest) {
             return _WaitingForOpponent(
+              roomId: state.currentRoom!.id,
+              hasPendingJoin: state.hasPendingJoinRequest,
+              pendingGuestName: state.currentRoom?.pendingGuestName,
+              onCancel: () {
+                context.read<OnlineGameBloc>().add(const LeaveRoomRequested());
+              },
+              onAccept: state.hasPendingJoinRequest ? () {
+                context.read<OnlineGameBloc>().add(
+                  AcceptJoinRequestEvent(state.currentRoom!.id),
+                );
+              } : null,
+              onDecline: state.hasPendingJoinRequest ? () {
+                context.read<OnlineGameBloc>().add(
+                  DeclineJoinRequestEvent(state.currentRoom!.id),
+                );
+              } : null,
+            );
+          }
+          
+          // Show waiting screen for guest waiting for host approval
+          if (state.isWaitingForJoinApproval) {
+            return _WaitingForHostApproval(
               roomId: state.currentRoom!.id,
               onCancel: () {
                 context.read<OnlineGameBloc>().add(const LeaveRoomRequested());
@@ -103,6 +147,34 @@ class _LobbyScreenContent extends StatelessWidget {
             },
           );
         },
+      ),
+    );
+  }
+
+  void _showJoinRequestDialog(BuildContext context, String roomId, String guestName) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(appStrings.joinRequest),
+        content: Text(appStrings.guestWantsToJoin(guestName)),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<OnlineGameBloc>().add(DeclineJoinRequestEvent(roomId));
+            },
+            child: Text(appStrings.cancel, style: const TextStyle(color: AppColors.danger)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<OnlineGameBloc>().add(AcceptJoinRequestEvent(roomId));
+            },
+            child: Text(appStrings.joinNow),
+          ),
+        ],
       ),
     );
   }
@@ -452,9 +524,122 @@ class _LiveGameCard extends StatelessWidget {
 
 class _WaitingForOpponent extends StatelessWidget {
   final String roomId;
+  final bool hasPendingJoin;
+  final String? pendingGuestName;
   final VoidCallback onCancel;
+  final VoidCallback? onAccept;
+  final VoidCallback? onDecline;
 
   const _WaitingForOpponent({
+    required this.roomId,
+    this.hasPendingJoin = false,
+    this.pendingGuestName,
+    required this.onCancel,
+    this.onAccept,
+    this.onDecline,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (!hasPendingJoin) ...[
+              const CircularProgressIndicator(color: AppColors.templeGold),
+              const SizedBox(height: 32),
+              Text(
+                appStrings.waitingForOpponent,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ] else ...[
+              const Icon(
+                Icons.person_add,
+                size: 64,
+                color: AppColors.templeGold,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                pendingGuestName ?? 'Someone',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.templeGold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                appStrings.playerWantsToJoin,
+                style: const TextStyle(
+                  fontSize: 18,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  OutlinedButton(
+                    onPressed: onDecline,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.danger,
+                      side: const BorderSide(color: AppColors.danger),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    child: Text(appStrings.decline),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: onAccept,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.templeGold,
+                      foregroundColor: AppColors.deepPurple,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    child: Text(appStrings.accept),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${appStrings.room}: ${roomId.substring(0, 8)}...',
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            if (!hasPendingJoin)
+              OutlinedButton(
+                onPressed: onCancel,
+                child: Text(appStrings.cancel),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WaitingForHostApproval extends StatelessWidget {
+  final String roomId;
+  final VoidCallback onCancel;
+
+  const _WaitingForHostApproval({
     required this.roomId,
     required this.onCancel,
   });
@@ -470,12 +655,13 @@ class _WaitingForOpponent extends StatelessWidget {
             const CircularProgressIndicator(color: AppColors.templeGold),
             const SizedBox(height: 32),
             Text(
-              appStrings.waitingForOpponent,
+              appStrings.waitingForHostApproval,
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             Container(
@@ -485,7 +671,7 @@ class _WaitingForOpponent extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                '${appStrings.room}: ${roomId.substring(0, 8)}...',
+                '${appStrings.room}: ${roomId.length > 8 ? '${roomId.substring(0, 8)}...' : roomId}',
                 style: const TextStyle(
                   fontFamily: 'monospace',
                   color: AppColors.textSecondary,

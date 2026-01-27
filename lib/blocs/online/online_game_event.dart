@@ -130,3 +130,44 @@ class ActiveGamesUpdated extends OnlineGameEvent {
   @override
   List<Object?> get props => [games];
 }
+
+/// Request to join a room (new flow - host must approve)
+class RequestJoinRoomEvent extends OnlineGameEvent {
+  final String roomId;
+
+  const RequestJoinRoomEvent(this.roomId);
+
+  @override
+  List<Object?> get props => [roomId];
+}
+
+/// Host accepts a join request
+class AcceptJoinRequestEvent extends OnlineGameEvent {
+  final String roomId;
+
+  const AcceptJoinRequestEvent(this.roomId);
+
+  @override
+  List<Object?> get props => [roomId];
+}
+
+/// Host declines a join request (cancels room)
+class DeclineJoinRequestEvent extends OnlineGameEvent {
+  final String roomId;
+
+  const DeclineJoinRequestEvent(this.roomId);
+
+  @override
+  List<Object?> get props => [roomId];
+}
+
+/// Notification received that someone wants to join
+class JoinRequestReceived extends OnlineGameEvent {
+  final String roomId;
+  final String guestName;
+
+  const JoinRequestReceived({required this.roomId, required this.guestName});
+
+  @override
+  List<Object?> get props => [roomId, guestName];
+}
