@@ -423,19 +423,19 @@ class _GameScreenContentState extends State<_GameScreenContent> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Leave Game?'),
-        content: const Text('Your progress will be lost.'),
+        title: Text(appStrings.leaveGame),
+        content: Text(appStrings.leaveGameMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(appStrings.cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
               Navigator.pop(context);
             },
-            child: const Text('Leave', style: TextStyle(color: AppColors.danger)),
+            child: Text(appStrings.leave, style: const TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -447,19 +447,19 @@ class _GameScreenContentState extends State<_GameScreenContent> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Resign?'),
-        content: const Text('Are you sure you want to resign this game?'),
+        title: Text(appStrings.resignGame),
+        content: Text(appStrings.resignGameMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(appStrings.cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
               _game?.resign();
             },
-            child: const Text('Resign', style: TextStyle(color: AppColors.danger)),
+            child: Text(appStrings.resign, style: const TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -471,12 +471,12 @@ class _GameScreenContentState extends State<_GameScreenContent> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Offer Draw?'),
-        content: const Text('Do you want to offer a draw to your opponent?'),
+        title: Text(appStrings.offerDraw),
+        content: Text(appStrings.offerDrawMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(appStrings.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -484,7 +484,7 @@ class _GameScreenContentState extends State<_GameScreenContent> {
               // In local 2-player, show draw acceptance dialog
               _showDrawAcceptDialog(context);
             },
-            child: const Text('Offer Draw'),
+            child: Text(appStrings.offerDrawButton),
           ),
         ],
       ),
@@ -496,19 +496,19 @@ class _GameScreenContentState extends State<_GameScreenContent> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Draw Offered'),
-        content: const Text('Your opponent offers a draw. Do you accept?'),
+        title: Text(appStrings.drawOffered),
+        content: Text(appStrings.drawOfferedMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Decline'),
+            child: Text(appStrings.decline),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
               context.read<GameBloc>().add(const DrawAccepted());
             },
-            child: const Text('Accept Draw'),
+            child: Text(appStrings.acceptDraw),
           ),
         ],
       ),
@@ -520,12 +520,12 @@ class _GameScreenContentState extends State<_GameScreenContent> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('New Game?'),
-        content: const Text('Start a new game? Current progress will be lost.'),
+        title: Text(appStrings.newGameQuestion),
+        content: Text(appStrings.newGameMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(appStrings.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -535,7 +535,7 @@ class _GameScreenContentState extends State<_GameScreenContent> {
               });
               context.read<GameBloc>().add(const GameStarted());
             },
-            child: const Text('New Game'),
+            child: Text(appStrings.newGame),
           ),
         ],
       ),

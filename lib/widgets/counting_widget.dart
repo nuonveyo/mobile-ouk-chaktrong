@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/game_constants.dart';
+import '../core/localization/app_strings.dart';
 import '../models/models.dart';
 import '../logic/game_rules.dart';
 
@@ -61,8 +62,8 @@ class CountingWidget extends StatelessWidget {
 
   Widget _buildActiveCountingDisplay(CountingState counting) {
     final typeLabel = counting.type == CountingType.boardHonor 
-        ? "Board's Honor" 
-        : "Piece's Honor";
+        ? appStrings.boardHonor 
+        : appStrings.pieceHonor;
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -110,9 +111,9 @@ class CountingWidget extends StatelessWidget {
                   fontSize: 20,
                 ),
               ),
-              const Text(
-                'left',
-                style: TextStyle(
+              Text(
+                appStrings.left,
+                style: const TextStyle(
                   color: AppColors.textMuted,
                   fontSize: 12,
                 ),
@@ -128,7 +129,7 @@ class CountingWidget extends StatelessWidget {
                 backgroundColor: AppColors.danger,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
-              child: const Text('Stop'),
+              child: Text(appStrings.stop),
             ),
         ],
       ),
@@ -141,7 +142,7 @@ class CountingWidget extends StatelessWidget {
       child: ElevatedButton.icon(
         onPressed: onDeclareDraw,
         icon: const Icon(Icons.handshake),
-        label: const Text('Declare Draw'),
+        label: Text(appStrings.declareDraw),
         style: ElevatedButton.styleFrom(
           backgroundColor: onDeclareDraw == null ? AppColors.surface : AppColors.warning,
           foregroundColor: onDeclareDraw == null ? AppColors.textMuted : AppColors.deepPurple,
@@ -166,15 +167,15 @@ class CountingWidget extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Start Counting',
+              appStrings.startCounting,
               style: TextStyle(
                 fontSize: 14,
                 color: onStartBoardCounting == null ? AppColors.textMuted : AppColors.textPrimary,
               ),
             ),
-            const Text(
-              "Board's Honor (64 moves)",
-              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+            Text(
+              appStrings.boardHonorMoves(64),
+              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
             ),
           ],
         ),

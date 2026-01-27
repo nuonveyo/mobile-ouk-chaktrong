@@ -170,13 +170,38 @@ class AppStrings {
   String get fish => _get('Fish', 'ត្រី');
 
   // Piece rules
-  String get kingRule => _get('Moves 1 square in any direction', 'ផ្លាស់ទី 1 ប្រឡោង រាល់ទិសដៅ');
-  String get maidenRule => _get('Moves 1 square diagonally (4 directions)', 'ផ្លាស់ទី 1 ប្រឡោង ទ្រេត (4 ទិស)');
-  String get elephantRule => _get('Moves 1 square diagonally (4 directions) or 1 square forward', 'ផ្លាស់ទី 1 ប្រឡោង ទ្រេត ឬ 1 ប្រឡោង មុខ');
+  String get kingRule => _get('Moves 1 square in any direction', 'ផ្លាស់ទី ១ ប្រឡោង រាល់ទិសដៅ');
+  String get maidenRule => _get('Moves 1 square diagonally (4 directions)', 'ផ្លាស់ទី ១ ប្រឡោង ទ្រេត (៤ ទិស)');
+  String get elephantRule => _get('Moves 1 square diagonally (4 directions) or 1 square forward', 'ផ្លាស់ទី ១ ប្រឡោង ទ្រេត ឬ ១ ប្រឡោង មុខ');
   String get horseRule => _get('Moves in an L-shape (can jump)', 'ផ្លាស់ទីជារូប L (អាចលោត)');
   String get boatRule => _get('Moves any number of squares horizontally or vertically', 'ផ្លាស់ទីច្រើនប្រឡោង ផ្ដេក ឬ បញ្ឈរ');
-  String get fishRule => _get('Moves 1 square forward, captures diagonally', 'ផ្លាស់ទី 1 ប្រឡោង មុខ ស៊ីទ្រេត');
-  String get fishPromotion => _get('Special: Fish promotes to Maiden when reaching rank 5', 'ពិសេស: ត្រី ក្លាយជា នាង នៅជួរ 5');
+  String get fishRule => _get('Moves 1 square forward, captures diagonally', 'ផ្លាស់ទី ១ ប្រឡោង មុខ ស៊ីទ្រេត');
+  String get fishPromotion => _get('Special: Fish promotes to Maiden when reaching rank 5', 'ពិសេស: ត្រី បកក្លាយជា នាង នៅជួរទី ៥');
+
+  // Draw offers
+  String get offerDraw => _get('Offer Draw?', 'ស្នើសុំស្មើ?');
+  String get offerDrawMessage => _get('Do you want to offer a draw to your opponent?', 'តើអ្នកចង់ស្នើសុំស្មើទៅគូប្រកួតឬ?');
+  String get offerDrawButton => _get('Offer Draw', 'ស្នើសុំស្មើ');
+  String get drawOffered => _get('Draw Offered', 'បានស្នើសុំស្មើ');
+  String get drawOfferedMessage => _get('Your opponent offers a draw. Do you accept?', 'គូប្រកួតស្នើសុំស្មើ។ តើអ្នកយល់ព្រមឬ?');
+  String get decline => _get('Decline', 'បដិសេធ');
+  String get acceptDraw => _get('Accept Draw', 'យល់ព្រមស្មើ');
+
+  // New game
+  String get newGameQuestion => _get('New Game?', 'ល្បែងថ្មី?');
+  String get newGameMessage => _get('Start a new game? Current progress will be lost.', 'ចាប់ផ្តើមល្បែងថ្មី? ដំណើរការនឹងបាត់បង់។');
+
+  // Counting widget
+  String get left => _get('left', 'នៅសល់');
+  String get stop => _get('Stop', 'ឈប់');
+  String get declareDraw => _get('Declare Draw', 'ប្រកាសស្មើ');
+  String get startCounting => _get('Start Counting', 'ចាប់ផ្តើមរាប់');
+  String boardHonorMoves(int moves) => _get("Count ($moves moves)", 'រាប់ ($moves ជំហាន)');
+
+  // Misc
+  String get updateNow => _get('UPDATE NOW', 'ធ្វើបច្ចុប្បន្នភាពឥឡូវនេះ');
+  String get back => _get('Back', 'ត្រឡប់ក្រោយ');
+  String get restart => _get('Restart', 'ចាប់ផ្តើមឡើងវិញ');
 
   // Helper to get string based on locale
   String _get(String en, String km) {

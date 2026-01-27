@@ -69,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 backgroundColor: AppColors.templeGold,
                 foregroundColor: AppColors.deepPurple,
               ),
-              child: const Text('UPDATE NOW'),
+              child: Text(appStrings.updateNow),
             ),
           ],
         ),

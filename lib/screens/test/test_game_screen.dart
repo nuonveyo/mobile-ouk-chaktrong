@@ -4,6 +4,7 @@ import 'package:flame/components.dart' hide Timer;
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/game_constants.dart';
+import '../../core/localization/app_strings.dart';
 import '../../models/models.dart';
 import '../../logic/game_rules.dart';
 import '../../logic/logic.dart';
@@ -101,7 +102,7 @@ class _TestGameScreenState extends State<TestGameScreen> {
               Navigator.of(ctx).pop();
               Navigator.of(context).pop(); // Go back to test list
             },
-            child: const Text('Back'),
+            child: Text(appStrings.back),
           ),
           ElevatedButton(
             onPressed: () {
@@ -113,7 +114,7 @@ class _TestGameScreenState extends State<TestGameScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.templeGold,
             ),
-            child: const Text('Restart'),
+            child: Text(appStrings.restart),
           ),
         ],
       ),
