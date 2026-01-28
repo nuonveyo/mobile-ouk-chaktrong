@@ -54,6 +54,7 @@ class _OukChaktrongAppState extends State<OukChaktrongApp> {
       if (context != null) {
         // Check if not already on game screen or lobby (lobby auto-accepts)
         final currentRoute = GoRouter.of(context).routerDelegate.currentConfiguration.fullPath;
+        debugPrint("app: $currentRoute");
         if (currentRoute.contains('/online-game/') || currentRoute.contains('/lobby')) {
           // Already on game or lobby - don't show dialog
           return;
@@ -67,35 +68,39 @@ class _OukChaktrongAppState extends State<OukChaktrongApp> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF2A1A4A),
-        title: const Text('Join Request', style: TextStyle(color: Colors.white)),
-        content: Text(
-          '$guestName wants to join your game',
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              // Decline - navigate to lobby which will handle cleanup
-              GoRouter.of(context).go('/lobby');
-            },
-            child: const Text('Decline', style: TextStyle(color: Colors.red)),
+      useRootNavigator: true,
+      builder: (dialogContext) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF2A1A4A),
+          title: const Text('Join Request', style: TextStyle(color: Colors.white)),
+          content: Text(
+            '$guestName wants to join your game',
+            style: const TextStyle(color: Colors.white70),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              // Accept - navigate directly to game
-              GoRouter.of(context).go('/online-game/$roomId');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD4AF37),
-              foregroundColor: Colors.black,
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                // Decline - navigate to lobby which will handle cleanup
+                GoRouter.of(context).go('/lobby');
+              },
+              child: const Text('Decline', style: TextStyle(color: Colors.red)),
             ),
-            child: const Text('Accept'),
-          ),
-        ],
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                // Accept - navigate directly to game
+                GoRouter.of(context).go('/online-game/$roomId');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD4AF37),
+                foregroundColor: Colors.black,
+              ),
+              child: const Text('Accept'),
+            ),
+          ],
+        ),
       ),
     );
   }

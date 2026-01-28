@@ -76,14 +76,15 @@ class _LobbyScreenContent extends StatelessWidget {
           if (state.isGameStarted && state.currentRoom != null && !state.isSpectating) {
             context.go('/online-game/${state.currentRoom!.id}');
           }
-          
+
+          // TODO: consider the logic to AUTO accept in this screen later
           // AUTO-ACCEPT: When host is on waiting screen and someone requests to join
           // Automatically accept without showing dialog (only triggered once due to listenWhen)
-          if (state.hasPendingJoinRequest && state.currentRoom != null) {
-            context.read<OnlineGameBloc>().add(
-              AcceptJoinRequestEvent(state.currentRoom!.id),
-            );
-          }
+          // if (state.hasPendingJoinRequest && state.currentRoom != null) {
+          //   context.read<OnlineGameBloc>().add(
+          //     AcceptJoinRequestEvent(state.currentRoom!.id),
+          //   );
+          // }
           
           // Handle room cancelled (for guest waiting)
           if (state.currentRoom?.isCancelled == true) {
