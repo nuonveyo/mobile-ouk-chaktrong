@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'repositories/online_game_repository.dart';
 import 'core/localization/app_strings.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -26,24 +27,21 @@ class _OukChaktrongAppState extends State<OukChaktrongApp> {
   }
 
   void _setupNotificationCallbacks() {
-    // When host taps notification (from background) → accept and navigate to game
+    // When host taps notification (from background or foreground) → show dialog
     notificationService.onJoinNowTapped = (roomId) {
       final context = AppRouter.navigatorKey.currentContext;
       if (context != null) {
-        // Check if not already on game screen
-        final currentRoute = GoRouter.of(context).routerDelegate.currentConfiguration.fullPath;
-        if (!currentRoute.contains('/online-game/')) {
-          // Navigate directly to the online game (auto-accept will happen via Firestore)
-          GoRouter.of(context).go('/online-game/$roomId');
-        }
+        // Get guest name from the notification data
+        // For now, we'll use a generic message since we don't store it
+        _showJoinRequestDialog(context, roomId, 'A player');
       }
     };
 
     // When host taps "Cancel" on notification
     notificationService.onCancelTapped = (roomId) {
-      // Just navigate to lobby (room will be cancelled)
       final context = AppRouter.navigatorKey.currentContext;
       if (context != null) {
+        // Decline the request
         GoRouter.of(context).go('/lobby');
       }
     };
@@ -54,7 +52,6 @@ class _OukChaktrongAppState extends State<OukChaktrongApp> {
       if (context != null) {
         // Check if not already on game screen or lobby (lobby auto-accepts)
         final currentRoute = GoRouter.of(context).routerDelegate.currentConfiguration.fullPath;
-        debugPrint("app: $currentRoute");
         if (currentRoute.contains('/online-game/') || currentRoute.contains('/lobby')) {
           // Already on game or lobby - don't show dialog
           return;
@@ -88,9 +85,15 @@ class _OukChaktrongAppState extends State<OukChaktrongApp> {
               child: const Text('Decline', style: TextStyle(color: Colors.red)),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(dialogContext);
-                // Accept - navigate directly to game
+                // Accept - update Firestore first, then navigate
+                try {
+                  await OnlineGameRepository().acceptJoinRequest(roomId);
+                } catch (e) {
+                  debugPrint('Failed to accept join request: $e');
+                }
+                // Navigate to game
                 GoRouter.of(context).go('/online-game/$roomId');
               },
               style: ElevatedButton.styleFrom(
