@@ -61,37 +61,37 @@ class RemoteConfigService {
   final FirebaseRemoteConfig _remoteConfig = FirebaseRemoteConfig.instance;
 
   Future<void> init() async {
-    await _remoteConfig.setConfigSettings(RemoteConfigSettings(
-      fetchTimeout: const Duration(minutes: 1),
-      minimumFetchInterval: const Duration(hours: 1),
-    ));
-    
-    // Set default empty structure to avoid errors
-    await _remoteConfig.setDefaults({
-      "force_update": jsonEncode({
-        "android": {
-          "min_version": "1.0.0",
-          "max_version": "1.0.0",
-          "title": "Force Update",
-          "message": "Your app request to update now",
-          "store_url": "",
-          "mandatory": true
-        },
-        "ios": {
-          "min_version": "1.0.0",
-          "max_version": "1.0.0",
-          "title": "Force Update",
-          "message": "Your app request to update now",
-          "store_url": "",
-          "mandatory": true
-        }
-      })
-    });
-
     try {
+      await _remoteConfig.setConfigSettings(RemoteConfigSettings(
+        fetchTimeout: const Duration(seconds: 10), // Reduced from 1 minute
+        minimumFetchInterval: const Duration(hours: 1),
+      ));
+      
+      // Set default empty structure to avoid errors
+      await _remoteConfig.setDefaults({
+        "force_update": jsonEncode({
+          "android": {
+            "min_version": "1.0.0",
+            "max_version": "1.0.0",
+            "title": "Force Update",
+            "message": "Your app request to update now",
+            "store_url": "",
+            "mandatory": true
+          },
+          "ios": {
+            "min_version": "1.0.0",
+            "max_version": "1.0.0",
+            "title": "Force Update",
+            "message": "Your app request to update now",
+            "store_url": "",
+            "mandatory": true
+          }
+        })
+      });
+
       await _remoteConfig.fetchAndActivate();
     } catch (e) {
-      print('Remote Config fetch failed: $e');
+      debugPrint('Remote Config init failed: $e');
     }
   }
 

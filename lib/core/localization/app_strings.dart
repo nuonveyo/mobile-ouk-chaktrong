@@ -93,8 +93,8 @@ class AppStrings {
   // Counting rules
   String get drawCountingLimit => _get('Draw - Counting Limit Reached', 'ស្មើ - ដល់កំណត់រាប់');
   String get drawCountingRule => _get('Draw - Counting Rule', 'ស្មើ - ច្បាប់រាប់');
-  String get boardHonor => _get("Board's Honor", 'កិត្តិយសក្តារ');
-  String get pieceHonor => _get("Piece's Honor", 'កិត្តិយសគ្រាប់');
+  String get boardHonor => _get("Board's Counting", 'រាប់តាមក្ដារ');
+  String get pieceHonor => _get("Piece's Counting", 'រាប់តាមកូនអុក');
   String countingReachedLimit(String type, int limit) => 
       _get('$type counting reached $limit moves.\nThe game is a draw!', 
            'ការរាប់$type ដល់ $limit ជំហាន។\nល្បែងស្មើ!');
@@ -130,7 +130,7 @@ class AppStrings {
   String get gameRules => _get('Game Rules', 'ច្បាប់ល្បែង');
 
   // Player profile
-  String get playerStats => _get('Player Stats', 'ស្ថិតិអ្នកលេង');
+  String get playerStats => _get('User Info', 'ព័តមានរបស់អ្នកប្រើប្រាស់');
   String get username => _get('Username', 'ឈ្មោះ');
   String get totalPoints => _get('Total Coins', 'កាក់សរុប');
   String get editProfile => _get('Edit Profile', 'កែប្រូហ្វាល');

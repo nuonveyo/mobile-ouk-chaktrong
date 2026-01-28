@@ -21,36 +21,68 @@ Future<void> runner(EnvConfig config) async {
   // Set global app config for access throughout the app
   appConfig = config;
   
+  // Set up global error handler for release mode
+  FlutterError.onError = (FlutterErrorDetails details) {
+    debugPrint('Flutter error: ${details.exception}');
+  };
+  
   // Initialize Firebase with environment-specific options
-  // Wrap in try-catch to handle case where iOS native layer already initialized Firebase
   try {
     await Firebase.initializeApp(
       options: config.firebaseOptions,
-    );
-  } on FirebaseException catch (e) {
-    if (e.code != 'duplicate-app') {
-      rethrow;
-    }
-    // Firebase already initialized by native iOS, continue normally
+    ).timeout(const Duration(seconds: 10), onTimeout: () {
+      debugPrint('Firebase init timeout');
+      throw Exception('Firebase init timeout');
+    });
+  } catch (e) {
+    debugPrint('Firebase init failed: $e');
+    // Continue anyway - app may work partially without Firebase
   }
   
   // Set up background message handler for FCM
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  try {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    debugPrint('FCM background handler setup failed: $e');
+  }
   
-  // Initialize localization
-  await appStrings.init();
+  // Initialize localization with timeout
+  try {
+    await appStrings.init().timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {
+        debugPrint('appStrings init timeout');
+      },
+    );
+  } catch (e) {
+    debugPrint('appStrings init failed: $e');
+  }
   
-  // Initialize sound service
-  await SoundService().init();
+  // Initialize optional services with error handling and timeouts
+  try {
+    await SoundService().init().timeout(const Duration(seconds: 5));
+  } catch (e) {
+    debugPrint('SoundService init failed: $e');
+  }
   
-  // Initialize remote config
-  await RemoteConfigService().init();
+  try {
+    await RemoteConfigService().init().timeout(const Duration(seconds: 15));
+  } catch (e) {
+    debugPrint('RemoteConfigService init failed: $e');
+  }
   
-  // Initialize FCM notification service
-  await notificationService.init();
+  try {
+    await notificationService.init().timeout(const Duration(seconds: 10));
+  } catch (e) {
+    debugPrint('NotificationService init failed: $e');
+  }
   
   // Initialize room lifecycle service for cleanup
-  roomLifecycleService.init();
+  try {
+    roomLifecycleService.init();
+  } catch (e) {
+    debugPrint('RoomLifecycleService init failed: $e');
+  }
   
   // Set preferred orientations (portrait only for better gameplay)
   await SystemChrome.setPreferredOrientations([
