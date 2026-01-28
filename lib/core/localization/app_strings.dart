@@ -211,6 +211,7 @@ class AppStrings {
   String get waitingForHostApproval => _get('Waiting for host approval...', 'កំពុងរង់ចាំការអនុម័ត...');
   String get playerWantsToJoin => _get('wants to join!', 'ចង់ចូលរួម!');
   String get accept => _get('Accept', 'ទទួល');
+  String get you => _get('you', 'អ្នក');
 
   // Helper to get string based on locale
   String _get(String en, String km) {

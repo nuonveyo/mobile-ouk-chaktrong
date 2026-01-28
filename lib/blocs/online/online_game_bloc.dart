@@ -35,6 +35,7 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
     on<AcceptJoinRequestEvent>(_onAcceptJoinRequest);
     on<DeclineJoinRequestEvent>(_onDeclineJoinRequest);
     on<LeaveRoomRequested>(_onLeaveRoom);
+    on<CancelRoomRequested>(_onCancelRoom);
     on<RoomUpdated>(_onRoomUpdated);
     on<OnlineMoveExecuted>(_onMoveExecuted);
     on<OnlineGameEnded>(_onGameEnded);
@@ -241,6 +242,20 @@ class OnlineGameBloc extends Bloc<OnlineGameEvent, OnlineGameBlocState> {
       _startListeningToRooms();
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: 'Error: $e'));
+    }
+  }
+
+  /// Cancel a room by ID (from room list)
+  Future<void> _onCancelRoom(
+    CancelRoomRequested event,
+    Emitter<OnlineGameBlocState> emit,
+  ) async {
+    try {
+      await _gameRepository.cancelRoom(event.roomId);
+      roomLifecycleService.setCurrentPendingRoom(null);
+      // Room list will update via Firestore listener
+    } catch (e) {
+      emit(state.copyWith(errorMessage: 'Failed to cancel room: $e'));
     }
   }
 

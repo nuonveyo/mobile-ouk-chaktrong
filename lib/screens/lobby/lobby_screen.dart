@@ -137,9 +137,13 @@ class _LobbyScreenContent extends StatelessWidget {
           return _RoomList(
             rooms: state.availableRooms,
             activeGames: state.activeGames,
+            currentUserId: state.playerId,
             onCreateRoom: () => _showCreateRoomDialog(context),
             onJoinRoom: (roomId) {
               context.read<OnlineGameBloc>().add(JoinRoomRequested(roomId));
+            },
+            onCancelRoom: (roomId) {
+              context.read<OnlineGameBloc>().add(CancelRoomRequested(roomId));
             },
             onWatchGame: (roomId) {
               context.read<OnlineGameBloc>().add(WatchAsSpectatorRequested(roomId));
@@ -285,15 +289,19 @@ class _TimeChip extends StatelessWidget {
 class _RoomList extends StatelessWidget {
   final List<OnlineGameRoom> rooms;
   final List<OnlineGameRoom> activeGames;
+  final String? currentUserId;
   final VoidCallback onCreateRoom;
   final void Function(String) onJoinRoom;
+  final void Function(String) onCancelRoom;
   final void Function(String) onWatchGame;
 
   const _RoomList({
     required this.rooms,
     required this.activeGames,
+    this.currentUserId,
     required this.onCreateRoom,
     required this.onJoinRoom,
+    required this.onCancelRoom,
     required this.onWatchGame,
   });
 
@@ -393,10 +401,16 @@ class _RoomList extends StatelessWidget {
             ),
           )
         else
-          ...rooms.map((room) => _RoomCard(
-            room: room,
-            onJoin: () => onJoinRoom(room.id),
-          )),
+          // Show all rooms - own rooms have Cancel button, others have Join button
+          ...rooms.map((room) {
+            final isOwnRoom = room.hostPlayerId == currentUserId;
+            return _RoomCard(
+              room: room,
+              isOwnRoom: isOwnRoom,
+              onJoin: isOwnRoom ? null : () => onJoinRoom(room.id),
+              onCancel: isOwnRoom ? () => onCancelRoom(room.id) : null,
+            );
+          }),
       ],
     );
   }
@@ -404,11 +418,15 @@ class _RoomList extends StatelessWidget {
 
 class _RoomCard extends StatelessWidget {
   final OnlineGameRoom room;
-  final VoidCallback onJoin;
+  final bool isOwnRoom;
+  final VoidCallback? onJoin;
+  final VoidCallback? onCancel;
 
   const _RoomCard({
     required this.room,
-    required this.onJoin,
+    this.isOwnRoom = false,
+    this.onJoin,
+    this.onCancel,
   });
 
   @override
@@ -433,7 +451,9 @@ class _RoomCard extends StatelessWidget {
           ),
         ),
         title: Text(
-          room.hostPlayerName ?? appStrings.player,
+          isOwnRoom 
+            ? '${room.hostPlayerName ?? appStrings.player} (${appStrings.you})'
+            : room.hostPlayerName ?? appStrings.player,
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -443,10 +463,19 @@ class _RoomCard extends StatelessWidget {
           '${appStrings.minFormat(minutes)} • ${appStrings.waitingOpponentShort}',
           style: const TextStyle(color: AppColors.textMuted),
         ),
-        trailing: ElevatedButton(
-          onPressed: onJoin,
-          child: Text(appStrings.join),
-        ),
+        trailing: isOwnRoom
+          ? OutlinedButton(
+              onPressed: onCancel,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.danger,
+                side: const BorderSide(color: AppColors.danger),
+              ),
+              child: Text(appStrings.cancel),
+            )
+          : ElevatedButton(
+              onPressed: onJoin,
+              child: Text(appStrings.join),
+            ),
       ),
     );
   }

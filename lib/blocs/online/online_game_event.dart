@@ -35,6 +35,16 @@ class LeaveRoomRequested extends OnlineGameEvent {
   const LeaveRoomRequested();
 }
 
+/// Cancel a specific room by ID (for host canceling from room list)
+class CancelRoomRequested extends OnlineGameEvent {
+  final String roomId;
+
+  const CancelRoomRequested(this.roomId);
+
+  @override
+  List<Object?> get props => [roomId];
+}
+
 /// Room data updated (from Firestore stream)
 class RoomUpdated extends OnlineGameEvent {
   final OnlineGameRoom? room;
