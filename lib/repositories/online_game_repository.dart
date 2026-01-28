@@ -162,7 +162,7 @@ class OnlineGameRepository {
     });
   }
 
-  /// Add a move to the game
+  /// Add a move to the game (optimized for speed - no transaction)
   Future<void> makeMove({
     required String roomId,
     required String moveNotation,
@@ -172,27 +172,14 @@ class OnlineGameRepository {
     String? lastMoveFrom,
     String? lastMoveTo,
   }) async {
-    final docRef = _gamesRef.doc(roomId);
-
-    await _firestore.runTransaction((transaction) async {
-      final snapshot = await transaction.get(docRef);
-      if (!snapshot.exists) return;
-
-      final data = snapshot.data()!;
-      final gameData = data['gameData'] as Map<String, dynamic>;
-      final moves = List<String>.from(gameData['moves'] ?? []);
-      
-      // Append the new move
-      moves.add(moveNotation);
-
-      transaction.update(docRef, {
-        'gameData.moves': moves,
-        'gameData.currentTurn': nextTurn,
-        'gameData.whiteTimeRemaining': whiteTime,
-        'gameData.goldTimeRemaining': goldTime,
-        'gameData.lastMoveFrom': lastMoveFrom,
-        'gameData.lastMoveTo': lastMoveTo,
-      });
+    // Use direct update with arrayUnion for faster real-time sync
+    await _gamesRef.doc(roomId).update({
+      'gameData.moves': FieldValue.arrayUnion([moveNotation]),
+      'gameData.currentTurn': nextTurn,
+      'gameData.whiteTimeRemaining': whiteTime,
+      'gameData.goldTimeRemaining': goldTime,
+      'gameData.lastMoveFrom': lastMoveFrom,
+      'gameData.lastMoveTo': lastMoveTo,
     });
   }
 
