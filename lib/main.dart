@@ -18,6 +18,9 @@ void main() async {
 Future<void> runner(EnvConfig config) async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Set global app config for access throughout the app
+  appConfig = config;
+  
   // Initialize Firebase with environment-specific options
   // Wrap in try-catch to handle case where iOS native layer already initialized Firebase
   try {

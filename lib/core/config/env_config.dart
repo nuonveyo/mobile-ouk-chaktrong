@@ -18,3 +18,6 @@ class EnvConfig {
   bool get isProd => environment == Environment.prod;
   bool get isUat => environment == Environment.uat;
 }
+
+/// Global app config - set during app initialization
+late EnvConfig appConfig;

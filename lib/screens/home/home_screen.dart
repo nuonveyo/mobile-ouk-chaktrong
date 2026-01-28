@@ -6,6 +6,7 @@ import '../../services/remote_config_service.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/game_constants.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/config/env_config.dart';
 import '../../app.dart';
 
 /// Home screen with game mode selection
@@ -131,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const Spacer(flex: 2),
                     // Bottom navigation
-                    _buildBottomNav(context),
+                    _buildBottomNav(context, appConfig),
                     const SizedBox(height: 16),
                   ],
                 ),
@@ -284,18 +285,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBottomNav(BuildContext context) {
+  Widget _buildBottomNav(BuildContext context, EnvConfig config) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildNavItem(Icons.home_filled, appStrings.home, true),
-        _buildNavItem(Icons.leaderboard_outlined, appStrings.ranks, false),
-        _buildNavItem(
-          Icons.bug_report_outlined,
-          appStrings.test,
-          false,
-          onTap: () => context.push('/test'),
-        ),
+        // Only show Ranks in UAT
+        if (config.isUat)
+          _buildNavItem(Icons.leaderboard_outlined, appStrings.ranks, false),
+        // Only show Test in UAT
+        if (config.isUat)
+          _buildNavItem(
+            Icons.bug_report_outlined,
+            appStrings.test,
+            false,
+            onTap: () => context.push('/test'),
+          ),
         _buildNavItem(
           Icons.settings_outlined,
           appStrings.settings,
