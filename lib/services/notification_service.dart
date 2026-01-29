@@ -14,6 +14,7 @@ class NotificationService {
   
   String? _fcmToken;
   bool _initialized = false;
+  RemoteMessage? _pendingInitialMessage; // Store for delayed processing
   
   // Callbacks for notification actions
   void Function(String roomId)? onJoinNowTapped;
@@ -57,14 +58,23 @@ class NotificationService {
       // Handle notification taps when app is in background
       FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
       
-      // Check if app was opened from a notification
-      final initialMessage = await _messaging.getInitialMessage();
-      if (initialMessage != null) {
-        _handleNotificationTap(initialMessage);
+      // Check if app was opened from a notification (STORE, don't process yet)
+      _pendingInitialMessage = await _messaging.getInitialMessage();
+      if (_pendingInitialMessage != null) {
+        debugPrint('App opened from notification, will process after UI ready');
       }
     }
     
     _initialized = true;
+  }
+
+  /// Process pending notification after app UI is ready
+  void processPendingNotification() {
+    if (_pendingInitialMessage != null) {
+      debugPrint('Processing pending notification');
+      _handleNotificationTap(_pendingInitialMessage!);
+      _pendingInitialMessage = null;
+    }
   }
 
   Future<void> _initLocalNotifications() async {

@@ -24,6 +24,11 @@ class _OukChaktrongAppState extends State<OukChaktrongApp> {
   void initState() {
     super.initState();
     _setupNotificationCallbacks();
+    
+    // Process any pending notification after first frame (cold start from notification)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notificationService.processPendingNotification();
+    });
   }
 
   void _setupNotificationCallbacks() {
